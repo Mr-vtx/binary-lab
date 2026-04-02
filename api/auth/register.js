@@ -7,7 +7,7 @@ import {
   getFingerprint,
 } from "../_lib/securefalc.js";
 import { setAuthCookies } from "../_lib/cookies.js";
-import { validateEmail } from "../_lib/validate.js";
+import { normalizeEmail, validateEmail } from "../_lib/validate.js";
 import { cors } from "../_lib/cors.js";
 
 export default async function handler(req, res) {
@@ -34,20 +34,28 @@ export default async function handler(req, res) {
   try {
     const db = await connectDB();
     const users = db.collection("users");
-const existing = await users.findOne({
-  $or: [{ email: email.toLowerCase().trim() }, { username: username.trim() }],
-});
-    if (existing) {
-      const field = existing.email === email ? "Email" : "Username";
-      return res.status(409).json({ error: `${field} already taken` });
-    }
+const normalizedEmail = normalizeEmail(email);
 
-    const passwordHash = await bcrypt.hash(password, 12);
+const existing = await users.findOne({
+  $or: [
+    { email: normalizedEmail },
+    { username: username.trim() },
+  ],
+});
+
+if (existing) {
+  const field =
+    existing.email === normalizedEmail ? "Email" : "Username";
+
+  return res.status(409).json({ error: `${field} already taken` });
+} 
+
+const passwordHash = await bcrypt.hash(password, 12);
 
     const now = new Date();
 
     const user = {
-      email: email.toLowerCase().trim(),
+email: normalizedEmail,
       username: username.trim(),
       passwordHash,
       createdAt: now,
@@ -68,7 +76,6 @@ const existing = await users.findOne({
 
     const result = await users.insertOne(user);
 
-    // 🔥 SAME FLOW AS LOGIN
     const accessToken = signAccessToken({
       userId: result.insertedId.toString(),
     });

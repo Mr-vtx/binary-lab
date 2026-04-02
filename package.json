@@ -6,7 +6,7 @@
   "description": "Terminal-style encoding toolkit — binary, ASCII, Morse & hex with XP progression and user accounts",
   "author": "Vans <chukwubuikem004@gmail.com> (https://github.com/mr-vtx)",
   "license": "AGPL-3.0",
-  "homepage": "https://binarylab.dev",
+  "homepage": "https://binary-lab.vercel.app",
   "repository": {
     "type": "git",
     "url": "https://github.com/mr-vtx/binary-lab"

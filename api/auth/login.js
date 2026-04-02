@@ -1,14 +1,16 @@
 import bcrypt from "bcryptjs";
 import { connectDB } from "../_lib/mongo.js";
-import { signAccessToken, signRefreshToken } from "../_lib/jwt.js";
+import { signAccessToken } from "../_lib/jwt.js";
 import { setAuthCookies } from "../_lib/cookies.js";
 import { generateToken, hashToken, getFingerprint } from "../_lib/securefalc.js";
 import { checkRateLimit } from "../_lib/rateLimit.js";
-import { validateEmail, sanitize } from "../_lib/validate.js";
+import { validateEmail, normalizeEmail } from "../_lib/validate.js";
+import { cors } from "../_lib/cors.js";
 
 const FAKE_HASH = "$2b$12$tIBXZVkCy5cv//8AF024uOV8rv3abYXXqqIkQ9A4jlAMK/ecOTEzy";
 
 export default async function handler(req, res) {
+    if (cors(req, res)) return;
   if (req.method !== "POST") return res.status(405).end();
 
   const db = await connectDB();
@@ -17,8 +19,7 @@ export default async function handler(req, res) {
   if (!validateEmail(email) || !password)
     return res.status(400).json({ error: "Invalid input" });
 
-  const cleanEmail = sanitize(email);
-
+const cleanEmail = normalizeEmail(email);
   const allowed = await checkRateLimit(
     db,
     `login:${cleanEmail}:${req.headers["x-forwarded-for"]}`,
