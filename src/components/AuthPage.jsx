@@ -148,7 +148,9 @@ export default function AuthPage({ onSuccess }) {
     try {
       if (mode === "login") {
         await login(email, password);
-        onSuccess?.();
+if (user) {
+  onSuccess?.();
+}       
       } else if (mode === "register") {
         await register(email, username, password, confirmPassword);
         onSuccess?.();
