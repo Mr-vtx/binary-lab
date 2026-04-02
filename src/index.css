@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: #0a0c0f;
+  color: #e8f5ef;
+  font-family: 'JetBrains Mono', monospace;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0e1117; }
+::-webkit-scrollbar-thumb { background: #1a2030; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #00ff8844; }
+
+.terminal-input {
+  background: #080b0e;
+  border: 1px solid #1a2030;
+  border-radius: 4px;
+  color: #e8f5ef;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.terminal-input:focus {
+  border-color: #00ff8844;
+  box-shadow: 0 0 0 2px #00ff8811;
+}
+.terminal-input::placeholder { color: #2a3d30; }
+
+.glow-green { text-shadow: 0 0 10px #00ff8877; }
+.glow-amber { text-shadow: 0 0 10px #ffb80077; }
+.glow-cyan  { text-shadow: 0 0 10px #00d4ff77; }
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.panel-animate { animation: panelIn 0.2s ease-out; }
+
+@keyframes bitPulse {
+  0%   { box-shadow: 0 0 0 0 #00ff8866; }
+  100% { box-shadow: 0 0 0 8px transparent; }
+}
+.bit-pulse { animation: bitPulse 0.35s ease-out; }
+
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+.cursor-blink { animation: blink 1s step-end infinite; }
+
+@keyframes fadeSlide {
+  from { opacity:0; transform:translateY(4px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.fade-slide { animation: fadeSlide 0.2s ease-out; }
