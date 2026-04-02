@@ -1,24 +1,53 @@
 import { connectDB } from "../_lib/mongo.js";
-import { hashToken } from "../_lib/securefalc.js";
+import { cors } from "../_lib/cors.js";
+import { parseCookies } from "../_lib/cookieParser.js";
 import { signAccessToken } from "../_lib/jwt.js";
+import {
+  hashToken,
+  generateToken,
+  getFingerprint,
+} from "../_lib/securefalc.js";
+import { setAuthCookies } from "../_lib/cookies.js";
 
 export default async function handler(req, res) {
-  const db = await connectDB();
+  if (cors(req, res)) return;
+  parseCookies(req);
 
-  const refreshToken = req.cookies.refreshToken;
-  if (!refreshToken) return res.status(401).end();
+  if (req.method !== "POST") return res.status(405).end();
 
-  const hashed = hashToken(refreshToken);
-  const session = await db.collection("sessions").findOne({ token: hashed });
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) return res.status(401).json({ error: "No refresh token" });
 
-  if (!session) return res.status(401).end();
+  try {
+    const db = await connectDB();
+    const hashed = hashToken(refreshToken);
 
-  const newAccess = signAccessToken({ userId: session.userId });
+    const session = await db.collection("sessions").findOne({
+      token: hashed,
+      expiresAt: { $gt: new Date() },
+    });
 
-  res.setHeader(
-    "Set-Cookie",
-    `accessToken=${newAccess}; HttpOnly; Path=/; Max-Age=900`,
-  );
+    if (!session) return res.status(401).json({ error: "Session expired" });
 
-  return res.status(200).json({ success: true });
+    await db.collection("sessions").deleteOne({ token: hashed });
+
+    const newAccess = signAccessToken({ userId: session.userId.toString() });
+    const newRefresh = generateToken();
+    const newCsrf = generateToken();
+    const fingerprint = getFingerprint(req);
+
+    await db.collection("sessions").insertOne({
+      userId: session.userId,
+      token: hashToken(newRefresh),
+      fingerprint,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 86400000),
+    });
+
+    setAuthCookies(res, newAccess, newRefresh, newCsrf);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Refresh error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
 }

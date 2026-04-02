@@ -1,9 +1,8 @@
 import crypto from "crypto";
 
+export const generateToken = () => crypto.randomBytes(40).toString("hex");
 export const hashToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
-
-export const generateToken = () => crypto.randomBytes(40).toString("hex");
 
 export const getFingerprint = (req) => {
   const ua = req.headers["user-agent"] || "";
@@ -11,7 +10,6 @@ export const getFingerprint = (req) => {
     req.headers["x-forwarded-for"]?.split(",")[0] ||
     req.socket?.remoteAddress ||
     "";
-
   return crypto
     .createHash("sha256")
     .update(ua + ip)

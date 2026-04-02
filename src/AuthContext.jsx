@@ -1,62 +1,84 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from './api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import api from "./api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null); 
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async () => {
     try {
-      const { data } = await api.get('/user/me');
+      const { data } = await api.get("/user/me");
       setProfile(data);
       setUser(data.user);
     } catch {
-      logout();
+      setUser(null);
+      setProfile(null);
     }
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('bl_token');
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      loadProfile().finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    loadProfile().finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const handle = () => {
+      setUser(null);
+      setProfile(null);
+    };
+    window.addEventListener("auth:logout", handle);
+    return () => window.removeEventListener("auth:logout", handle);
   }, []);
 
   const login = async (email, password) => {
-    const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('bl_token', data.token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-    setUser(data.user);
+    const { data } = await api.post("/auth/login", { email, password });
     await loadProfile();
     return data;
   };
 
-  const register = async (email, username, password) => {
-    const { data } = await api.post('/auth/register', { email, username, password });
-    localStorage.setItem('bl_token', data.token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-    setUser(data.user);
+  const register = async (email, username, password, confirmPassword) => {
+    const { data } = await api.post("/auth/register", {
+      email,
+      username,
+      password,
+      confirmPassword,
+    });
     await loadProfile();
     return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem('bl_token');
-    delete api.defaults.headers.common['Authorization'];
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout"); 
+    } catch {
+     
+    }
     setUser(null);
     setProfile(null);
   };
 
-  const refreshProfile = () => loadProfile();
+  const refreshProfile = useCallback(() => loadProfile(), [loadProfile]);
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, register, logout, refreshProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        loading,
+        login,
+        register,
+        logout,
+        refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

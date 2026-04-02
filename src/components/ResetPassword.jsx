@@ -83,7 +83,6 @@ function PasswordStrength({ password }) {
 }
 
 export default function ResetPasswordPage({ onSuccess }) {
-  // Get token from URL: /reset-password?token=xxxx
   const token = new URLSearchParams(window.location.search).get("token");
 
   const [status, setStatus] = useState("validating"); // validating | valid | invalid | submitting | done
@@ -130,9 +129,7 @@ export default function ResetPasswordPage({ onSuccess }) {
         password,
         confirmPassword,
       });
-      // Auto-login with the returned token
-      localStorage.setItem("bl_token", data.token);
-      api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+      
       setStatus("done");
       setTimeout(() => onSuccess?.(), 1500);
     } catch (err) {

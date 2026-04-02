@@ -1,10 +1,18 @@
+import { parseCookies } from "../_lib/cookieParser.js";
 import bcrypt from "bcryptjs";
 import { connectDB } from "../_lib/mongo.js";
 import { cors } from "../_lib/cors.js";
-import { signToken } from "../_lib/auth.js";
+import { signAccessToken, signRefreshToken } from "../_lib/jwt.js";
+import { setAuthCookies } from "../_lib/cookies.js";
+import {
+  generateToken,
+  hashToken,
+  getFingerprint,
+} from "../_lib/securefalc.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
+  parseCookies(req);
 
   if (req.method === "GET") {
     const { token } = req.query;
@@ -68,18 +76,26 @@ export default async function handler(req, res) {
         {
           $set: {
             passwordHash,
-            "passwordReset.usedAt": new Date(), 
+            "passwordReset.usedAt": new Date(),
           },
         },
       );
 
-      const authToken = signToken({
-        userId: user._id.toString(),
-        username: user.username,
+      const accessToken = signAccessToken({ userId: user._id.toString() });
+      const refreshToken = generateToken();
+      const csrfToken = generateToken();
+      const fingerprint = getFingerprint(req);
+
+      await db.collection("sessions").insertOne({
+        userId: user._id,
+        token: hashToken(refreshToken),
+        fingerprint,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 7 * 86400000),
       });
-      return res
-        .status(200)
-        .json({ message: "Password reset successfully.", token: authToken });
+
+      setAuthCookies(res, accessToken, refreshToken, csrfToken);
+      return res.status(200).json({ message: "Password reset successfully." });
     } catch (err) {
       console.error("Reset password error:", err);
       return res.status(500).json({ error: "Server error" });

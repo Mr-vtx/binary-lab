@@ -3,7 +3,7 @@ import api from "../api";
 
 export default function VerifyEmailPage({ onSuccess }) {
   const token = new URLSearchParams(window.location.search).get("token");
-  const [status, setStatus] = useState("verifying"); // verifying | success | already | error
+  const [status, setStatus] = useState("verifying");
 
   useEffect(() => {
     if (!token) {
@@ -16,11 +16,6 @@ export default function VerifyEmailPage({ onSuccess }) {
         if (data.alreadyVerified) {
           setStatus("already");
           return;
-        }
-        if (data.token) {
-          // Auto-login with the returned token
-          localStorage.setItem("bl_token", data.token);
-          api.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
         }
         setStatus("success");
         setTimeout(() => {

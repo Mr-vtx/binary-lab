@@ -1,7 +1,8 @@
-import { connectDB } from '../_lib/mongo.js';
-import { requireAuth } from '../_lib/auth.js';
-import { cors } from '../_lib/cors.js';
-import { ObjectId } from 'mongodb';
+import { parseCookies } from "../_lib/cookieParser.js";
+import { connectDB } from "../_lib/mongo.js";
+import { verifyAccessToken } from "../_lib/jwt.js";
+import { cors } from "../_lib/cors.js";
+import { ObjectId } from "mongodb";
 import {
   calcXP,
   updateStreak,
@@ -9,36 +10,49 @@ import {
   getNextStage,
   calcDailyStreakUpdate,
   getDailyKey,
-} from '../_lib/progression.js';
+} from "../_lib/progression.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  parseCookies(req);
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
-  const user = requireAuth(req);
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  const token = req.cookies?.accessToken;
+  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  const user = verifyAccessToken(token);
+  if (!user) return res.status(401).json({ error: "Unauthorized" });
 
   const { category, question, answer, chosen } = req.body;
   if (!category || !question || !answer || chosen === undefined) {
-    return res.status(400).json({ error: 'category, question, answer, chosen are required' });
+    return res
+      .status(400)
+      .json({ error: "category, question, answer, chosen are required" });
   }
 
   const isCorrect = answer === chosen;
 
   try {
     const db = await connectDB();
-    const users = db.collection('users');
-    const sessions = db.collection('quiz_sessions');
+    const users = db.collection("users");
+    const sessions = db.collection("quiz_sessions");
 
     const dbUser = await users.findOne({ _id: new ObjectId(user.userId) });
-    if (!dbUser) return res.status(404).json({ error: 'User not found' });
+    if (!dbUser) return res.status(404).json({ error: "User not found" });
 
     const newCurrentStreak = updateStreak(dbUser.streak.current, isCorrect);
     const newBestStreak = Math.max(dbUser.streak.best, newCurrentStreak);
 
-    const { dailyStreak, lastActiveDate } = calcDailyStreakUpdate(dbUser.streak, dbUser.streak.lastActiveDate);
+    const { dailyStreak, lastActiveDate } = calcDailyStreakUpdate(
+      dbUser.streak,
+      dbUser.streak.lastActiveDate,
+    );
 
-    const xpGained = calcXP({ isCorrect, category, streakCount: newCurrentStreak });
+    const xpGained = calcXP({
+      isCorrect,
+      category,
+      streakCount: newCurrentStreak,
+    });
     const newXP = dbUser.xp + xpGained;
 
     const oldStage = getStageForXP(dbUser.xp);
@@ -46,38 +60,43 @@ export default async function handler(req, res) {
     const stagedUp = newStage.id > oldStage.id;
 
     const catKey = `stats.byCategory.${category}`;
-    const catStats = dbUser.stats.byCategory[category] || { correct: 0, total: 0 };
+    const catStats = dbUser.stats.byCategory[category] || {
+      correct: 0,
+      total: 0,
+    };
 
     const updatedUser = await users.findOneAndUpdate(
       { _id: new ObjectId(user.userId) },
       {
         $set: {
           xp: newXP,
-          'streak.current': newCurrentStreak,
-          'streak.best': newBestStreak,
-          'streak.daily': dailyStreak,
-          'streak.lastActiveDate': lastActiveDate,
+          "streak.current": newCurrentStreak,
+          "streak.best": newBestStreak,
+          "streak.daily": dailyStreak,
+          "streak.lastActiveDate": lastActiveDate,
           [`stats.byCategory.${category}`]: {
             correct: catStats.correct + (isCorrect ? 1 : 0),
             total: catStats.total + 1,
           },
         },
         $inc: {
-          'stats.totalAnswered': 1,
-          'stats.totalCorrect': isCorrect ? 1 : 0,
+          "stats.totalAnswered": 1,
+          "stats.totalCorrect": isCorrect ? 1 : 0,
         },
-        ...(stagedUp ? {
-          $push: {
-            stageHistory: {
-              stageId: newStage.id,
-              stageName: newStage.name,
-              reachedAt: new Date(),
-              xpAtTime: newXP,
+        ...(stagedUp
+          ? {
+              $push: {
+                stageHistory: {
+                  stageId: newStage.id,
+                  stageName: newStage.name,
+                  reachedAt: new Date(),
+                  xpAtTime: newXP,
+                },
+              },
             }
-          }
-        } : {}),
+          : {}),
       },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
 
     const today = getDailyKey();
@@ -93,11 +112,15 @@ export default async function handler(req, res) {
             isCorrect,
             xpGained,
             answeredAt: new Date(),
-          }
+          },
         },
-        $setOnInsert: { userId: user.userId, date: today, createdAt: new Date() },
+        $setOnInsert: {
+          userId: user.userId,
+          date: today,
+          createdAt: new Date(),
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
     const nextStage = getNextStage(newXP);
@@ -117,7 +140,7 @@ export default async function handler(req, res) {
       weakSpot: !isCorrect ? category : null,
     });
   } catch (err) {
-    console.error('Answer error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    console.error("Answer error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 }
