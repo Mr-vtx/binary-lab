@@ -1,6 +1,6 @@
-import { connectDB } from "../../_lib/mongo.js";
-import { hashToken } from "../../_lib/security.js";
-import { signAccessToken } from "../../_lib/jwt.js";
+import { connectDB } from "../_lib/mongo.js";
+import { hashToken } from "../_lib/securefalc.js";
+import { signAccessToken } from "../_lib/jwt.js";
 
 export default async function handler(req, res) {
   const db = await connectDB();
