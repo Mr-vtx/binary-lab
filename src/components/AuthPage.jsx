@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../AuthContext";
 import api from "../api";
 import { Eye, EyeOff } from "lucide-react";
+import { track } from "@vercel/analytics";
 
 function Field({
   label,
@@ -148,11 +149,13 @@ export default function AuthPage({ onSuccess }) {
     try {
       if (mode === "login") {
         await login(email, password);
+        track("login", { method: "email" });
 if (user) {
   onSuccess?.();
 }       
       } else if (mode === "register") {
         await register(email, username, password, confirmPassword);
+        track("register", { method: "email" });
         onSuccess?.();
       } else if (mode === "forgot") {
         await api.post("/auth/forgot-password", { email });
