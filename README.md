@@ -152,7 +152,9 @@ Works in all modern browsers (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+). No
 
 ## License
 
-MIT — do whatever you want with it.
+AGPL-3.0 You are free to use and modify.
+If you modify the code and make it available over a network (e.g., as a web service), you must also make the source code available.
+Any derivative work must also be licensed under AGPL-3.0.
 
 ---
 
