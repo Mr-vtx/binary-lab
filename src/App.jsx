@@ -12,6 +12,7 @@ import ResetPasswordPage from "./components/ResetPassword";
 import VerifyEmailPage from "./components/VerifyEmail";
 import VerifyEmailBanner from "./components/VerifyEmailBanner";
 import LandingPage from "./components/LandingPage";
+import { Analytics } from "@vercel/analytics/react";
 
 const TABS = [
   {
@@ -257,6 +258,7 @@ function Shell() {
 export default function App() {
   return (
     <AuthProvider>
+      <Analytics />
       <Shell />
     </AuthProvider>
   );
