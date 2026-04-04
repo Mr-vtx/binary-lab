@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
-  
+
   const { email, password, confirmPassword, username } = req.body;
 
   if (
@@ -90,11 +90,10 @@ export default async function handler(req, res) {
 
     setAuthCookies(res, accessToken, refreshToken, csrfToken);
 
-    Promise.allSettled([
-      sendWelcomeEmail(user.email, user.username),
-      sendVerificationEmail(user.email, user.username, verifyToken),
-    ]).catch((err) => console.error("Email error:", err));
-
+ await Promise.allSettled([
+   sendWelcomeEmail(user.email, user.username),
+   sendVerificationEmail(user.email, user.username, verifyToken),
+ ]);
     const { passwordHash: _, emailVerification: __, ...safeUser } = user;
     return res.status(201).json({
       success: true,

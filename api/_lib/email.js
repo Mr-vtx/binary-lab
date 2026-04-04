@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import { resetPasswordTemplate as resetTpl } from "../emails/templates/resetPassword.js";
 import { welcomeTemplate as welcomeTpl } from "../emails/templates/welcomeEmail.js";
+import { verifyEmailTemplate as verifyTpl } from "../emails/templates/verifyEmail.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -75,28 +76,31 @@ export async function sendWelcomeEmail(email, username) {
 export async function sendVerificationEmail(email, username, token) {
   const verifyLink = `${process.env.APP_URL}/verify-email?token=${token}`;
 
-  const html = `
-    <div style="font-family:monospace;background:#0a0c0f;color:#e8f5ef;padding:20px;">
-      <h2 style="color:#00ff88">${APP_NAME}</h2>
-      <p>Hello ${username},</p>
-      <p>Verify your email:</p>
-      <a href="${verifyLink}" style="color:#00ff88;">Verify Email</a>
-    </div>
-  `;
+  const html = verifyTpl({
+    appName: APP_NAME,
+    username,
+    verifyLink,
+  });
 
-  if (process.env.USE_NODEMAILER === "true") {
-    await transporter.sendMail({
-      from: FROM_GMAIL,
-      to: email,
-      subject: `Verify your ${APP_NAME} account`,
-      html,
-    });
-  } else {
-    await resend.emails.send({
-      from: FROM_RESEND,
-      to: email,
-      subject: `Verify your ${APP_NAME} account`,
-      html,
-    });
+  try {
+    if (process.env.USE_NODEMAILER === "true") {
+      const res = await transporter.sendMail({
+        from: FROM_GMAIL,
+        to: email,
+        subject: `Verify your ${APP_NAME} account`,
+        html,
+      });
+      console.log("Gmail email sent:", res.messageId);
+    } else {
+      const res = await resend.emails.send({
+        from: FROM_RESEND,
+        to: email,
+        subject: `Verify your ${APP_NAME} account`,
+        html,
+      });
+      console.log("Resend email sent:", res);
+    }
+  } catch (err) {
+    console.error("Verification email failed:", err);
   }
 }
