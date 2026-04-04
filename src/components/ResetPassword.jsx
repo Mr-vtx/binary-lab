@@ -1,271 +1,122 @@
-import { useState, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
-import api from "../api";
-import { useAuth } from "../AuthContext";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { signAccessToken } from "../../lib/jwt.js";
+import { setAuthCookies } from "../../lib/cookies.js";
+import {
+  generateToken,
+  hashToken,
+  getFingerprint,
+} from "../../lib/securefalc.js";
 
-function PasswordField({ label, value, onChange, placeholder, error }) {
-  const [show, setShow] = useState(false);
-  return (
-    <div className="space-y-1">
-      <label className="text-[10px] font-mono text-terminal-text-secondary uppercase tracking-widest">
-        {label}
-      </label>
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-terminal-green/40 font-mono text-sm select-none">
-          ›
-        </span>
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="terminal-input pl-7 pr-10"
-        />
-        <button
-          type="button"
-          onClick={() => setShow((s) => !s)}
-          tabIndex={-1}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-terminal-text-muted hover:text-terminal-text-secondary transition-colors"
-        >
-          {show ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
-      </div>
-      {error && (
-        <p className="text-[11px] text-terminal-red font-mono">⚠ {error}</p>
-      )}
-    </div>
-  );
-}
+export default async function handler(req, res) {
+  if (cors(req, res)) return;
 
-function PasswordStrength({ password }) {
-  if (!password) return null;
-  const checks = [
-    { label: "min 6 chars", pass: password.length >= 6 },
-    { label: "uppercase", pass: /[A-Z]/.test(password) },
-    { label: "number", pass: /[0-9]/.test(password) },
-    { label: "special", pass: /[^A-Za-z0-9]/.test(password) },
-  ];
-  const score = checks.filter((c) => c.pass).length;
-  const bar = [
-    "bg-terminal-red",
-    "bg-terminal-red",
-    "bg-terminal-amber",
-    "bg-terminal-cyan",
-    "bg-terminal-green",
-  ][score];
-  return (
-    <div className="space-y-1.5 mt-1">
-      <div className="flex gap-1 items-center">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full transition-all duration-300 ${i < score ? bar : "bg-terminal-border"}`}
-          />
-        ))}
-        <span
-          className={`text-[10px] font-mono ml-1 ${score >= 4 ? "text-terminal-green" : score >= 3 ? "text-terminal-cyan" : "text-terminal-amber"}`}
-        >
-          {["", "Weak", "Weak", "Fair", "Strong", "Strong"][score]}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-        {checks.map((c) => (
-          <span
-            key={c.label}
-            className={`text-[10px] font-mono ${c.pass ? "text-terminal-green" : "text-terminal-text-muted"}`}
-          >
-            {c.pass ? "✓" : "○"} {c.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
+  if (req.method === "GET") {
+    const { token } = req.query;
 
-export default function ResetPasswordPage({ onSuccess }) {
-  const token = new URLSearchParams(window.location.search).get("token");
-
-  const [status, setStatus] = useState("validating"); // validating | valid | invalid | submitting | done
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState("");
-
-  const { login } = useAuth();
-
-  useEffect(() => {
     if (!token) {
-      setStatus("invalid");
-      return;
+      return res.status(400).json({ error: "Token is required" });
     }
-    api
-      .get(`/auth/reset-password?token=${token}`)
-      .then(({ data }) => {
-        setStatus("valid");
-        setUsername(data.username);
-      })
-      .catch(() => setStatus("invalid"));
-  }, [token]);
-
-  const validate = () => {
-    const e = {};
-    if (password.length < 6) e.password = "At least 6 characters";
-    if (password !== confirmPassword)
-      e.confirmPassword = "Passwords do not match";
-    return e;
-  };
-
-  const submit = async () => {
-    const e = validate();
-    setErrors(e);
-    if (Object.keys(e).length) return;
-    setStatus("submitting");
-    setServerError("");
 
     try {
-      const { data } = await api.post("/auth/reset-password", {
-        token,
-        password,
-        confirmPassword,
+      const db = await connectDB();
+
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+      const user = await db.collection("users").findOne({
+        "passwordReset.token": hashedToken,
+        "passwordReset.expires": { $gt: new Date() },
+        "passwordReset.usedAt": null,
       });
-      
-      setStatus("done");
-      setTimeout(() => onSuccess?.(), 1500);
+
+      if (!user) {
+        return res
+          .status(400)
+          .json({ error: "Link is invalid or has expired." });
+      }
+
+      return res.status(200).json({
+        valid: true,
+        username: user.username,
+      });
     } catch (err) {
-      setServerError(err?.response?.data?.error || "Something went wrong.");
-      setStatus("valid");
+      console.error("Reset validate error:", err);
+      return res.status(500).json({ error: "Server error" });
     }
-  };
-
-  const handleKey = (e) => {
-    if (e.key === "Enter") submit();
-  };
-
-  const Shell = ({ title, children }) => (
-    <div className="min-h-screen bg-terminal-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="font-display text-terminal-green text-2xl tracking-widest glow-green mb-1">
-            BINARY_LAB
-          </div>
-        </div>
-        <div className="bg-terminal-panel border border-terminal-border rounded-lg overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-terminal-border bg-terminal-bg">
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-            </div>
-            <span className="text-[11px] font-mono text-terminal-text-muted ml-2">
-              {title}
-            </span>
-          </div>
-          <div className="p-6">{children}</div>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (status === "validating") {
-    return (
-      <Shell title="auth --reset-password">
-        <div className="text-center py-4 font-mono text-terminal-text-muted text-sm">
-          Validating link<span className="cursor-blink">▊</span>
-        </div>
-      </Shell>
-    );
   }
 
-  if (status === "invalid") {
-    return (
-      <Shell title="auth --reset-password">
-        <div className="text-center space-y-3 py-2">
-          <div className="text-2xl">⛔</div>
-          <p className="text-sm font-mono text-terminal-red">
-            Link is invalid or has expired.
-          </p>
-          <p className="text-xs font-mono text-terminal-text-muted">
-            Reset links expire after 1 hour and can only be used once.
-          </p>
-          <button
-            onClick={() => {
-              window.history.pushState({}, "", "/");
-              onSuccess?.();
-            }}
-            className="text-xs font-mono text-terminal-green hover:glow-green transition-all mt-2"
-          >
-            Request a new link →
-          </button>
-        </div>
-      </Shell>
-    );
+  if (req.method === "POST") {
+    const { token, password, confirmPassword } = req.body;
+
+    if (!token || !password || !confirmPassword) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ error: "Passwords do not match" });
+    }
+
+    try {
+      const db = await connectDB();
+
+      const hashedToken = crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+      const user = await db.collection("users").findOne({
+        "passwordReset.token": hashedToken,
+        "passwordReset.expires": { $gt: new Date() },
+        "passwordReset.usedAt": null,
+      });
+
+      if (!user) {
+        return res
+          .status(400)
+          .json({ error: "Link is invalid or has expired." });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      await db.collection("users").updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            passwordHash,
+            "passwordReset.usedAt": new Date(),
+          },
+        },
+      );
+
+      const accessToken = signAccessToken({
+        userId: user._id.toString(),
+      });
+
+      const refreshToken = generateToken();
+      const csrfToken = generateToken();
+      const fingerprint = getFingerprint(req);
+
+      await db.collection("sessions").insertOne({
+        userId: user._id,
+        token: hashToken(refreshToken),
+        fingerprint,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 7 * 86400000),
+      });
+
+      setAuthCookies(res, accessToken, refreshToken, csrfToken);
+
+      return res.status(200).json({ message: "Password reset successfully." });
+    } catch (err) {
+      console.error("Reset error:", err);
+      return res.status(500).json({ error: "Server error" });
+    }
   }
 
-  if (status === "done") {
-    return (
-      <Shell title="auth --reset-password">
-        <div className="text-center space-y-3 py-2 fade-slide">
-          <div className="text-2xl">✓</div>
-          <p className="text-sm font-mono text-terminal-green glow-green">
-            Password reset successfully.
-          </p>
-          <p className="text-xs font-mono text-terminal-text-muted">
-            Logging you in<span className="cursor-blink">▊</span>
-          </p>
-        </div>
-      </Shell>
-    );
-  }
-
-  return (
-    <Shell title="auth --reset-password">
-      <div className="space-y-4" onKeyDown={handleKey}>
-        {username && (
-          <p className="text-xs font-mono text-terminal-text-muted">
-            Setting new password for{" "}
-            <span className="text-terminal-green">{username}</span>
-          </p>
-        )}
-
-        <div className="space-y-1">
-          <PasswordField
-            label="New Password"
-            value={password}
-            onChange={setPassword}
-            placeholder="••••••"
-            error={errors.password}
-          />
-          <PasswordStrength password={password} />
-        </div>
-
-        <PasswordField
-          label="Confirm New Password"
-          value={confirmPassword}
-          onChange={setConfirmPassword}
-          placeholder="••••••"
-          error={errors.confirmPassword}
-        />
-
-        {serverError && (
-          <div className="bg-red-900/20 border border-terminal-red/30 rounded px-3 py-2 text-sm font-mono text-terminal-red">
-            ✗ {serverError}
-          </div>
-        )}
-
-        <button
-          onClick={submit}
-          disabled={status === "submitting"}
-          className={`w-full py-3 rounded border font-mono text-sm uppercase tracking-wider transition-all
-            ${
-              status === "submitting"
-                ? "border-terminal-border text-terminal-text-muted cursor-wait"
-                : "border-terminal-green text-terminal-green bg-terminal-green-muted hover:shadow-glow-green cursor-pointer"
-            }`}
-        >
-          {status === "submitting" ? "..." : "→ Reset password"}
-        </button>
-      </div>
-    </Shell>
-  );
+  return res.status(405).json({ error: "Method not allowed" });
 }

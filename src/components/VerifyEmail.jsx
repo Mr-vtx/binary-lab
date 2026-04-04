@@ -3,6 +3,7 @@ import api from "../api";
 
 export default function VerifyEmailPage({ onSuccess }) {
   const token = new URLSearchParams(window.location.search).get("token");
+
   const [status, setStatus] = useState("verifying");
 
   useEffect(() => {
@@ -10,6 +11,7 @@ export default function VerifyEmailPage({ onSuccess }) {
       setStatus("error");
       return;
     }
+
     api
       .get(`/auth/verify-email?token=${token}`)
       .then(({ data }) => {
@@ -17,13 +19,31 @@ export default function VerifyEmailPage({ onSuccess }) {
           setStatus("already");
           return;
         }
-        setStatus("success");
-        setTimeout(() => {
-          window.history.pushState({}, "", "/");
-          onSuccess?.();
-        }, 2000);
+
+        if (data.verified) {
+          setStatus("success");
+
+          setTimeout(() => {
+            onSuccess?.();
+            window.location.href = "/"; // 🔥 proper redirect
+          }, 1500);
+
+          return;
+        }
+
+        // fallback
+        setStatus("error");
       })
-      .catch(() => setStatus("error"));
+      .catch((err) => {
+        // handle backend error properly
+        const msg = err?.response?.data?.error;
+
+        if (msg?.includes("expired") || msg?.includes("invalid")) {
+          setStatus("expired");
+        } else {
+          setStatus("error");
+        }
+      });
   }, [token]);
 
   const states = {
@@ -37,32 +57,42 @@ export default function VerifyEmailPage({ onSuccess }) {
       icon: "✓",
       iconColor: "text-terminal-green glow-green",
       title: "Email verified.",
-      desc: "Your account is active. Logging you in…",
-      action: null,
+      desc: "Your account is active. Redirecting…",
     },
     already: {
       icon: "✓",
       iconColor: "text-terminal-cyan",
       title: "Already verified.",
-      desc: "Your email is already confirmed. Head back to the app.",
+      desc: "Your email is already confirmed.",
       action: {
         label: "→ Go to app",
         fn: () => {
-          window.history.pushState({}, "", "/");
           onSuccess?.();
+          window.location.href = "/";
+        },
+      },
+    },
+    expired: {
+      icon: "⛔",
+      iconColor: "text-terminal-red",
+      title: "Link expired.",
+      desc: "This verification link has expired. Request a new one.",
+      action: {
+        label: "→ Go to login",
+        fn: () => {
+          window.location.href = "/";
         },
       },
     },
     error: {
       icon: "⛔",
       iconColor: "text-terminal-red",
-      title: "Link is invalid or expired.",
-      desc: "Verification links expire after 24 hours. Log in and request a new one.",
+      title: "Verification failed.",
+      desc: "Something went wrong. Try again.",
       action: {
-        label: "→ Back to login",
+        label: "→ Go to login",
         fn: () => {
-          window.history.pushState({}, "", "/");
-          onSuccess?.();
+          window.location.href = "/";
         },
       },
     },
@@ -80,17 +110,6 @@ export default function VerifyEmailPage({ onSuccess }) {
         </div>
 
         <div className="bg-terminal-panel border border-terminal-border rounded-lg overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-terminal-border bg-terminal-bg">
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-            </div>
-            <span className="text-[11px] font-mono text-terminal-text-muted ml-2">
-              auth --verify-email
-            </span>
-          </div>
-
           <div className="p-8 text-center space-y-4 fade-slide">
             {s.icon && (
               <div className={`text-4xl font-mono font-bold ${s.iconColor}`}>
@@ -104,7 +123,7 @@ export default function VerifyEmailPage({ onSuccess }) {
             </p>
 
             {s.desc && (
-              <p className="text-xs font-mono text-terminal-text-muted leading-relaxed">
+              <p className="text-xs font-mono text-terminal-text-muted">
                 {s.desc}
               </p>
             )}
@@ -112,7 +131,7 @@ export default function VerifyEmailPage({ onSuccess }) {
             {s.action && (
               <button
                 onClick={s.action.fn}
-                className="mt-2 text-xs font-mono text-terminal-green hover:glow-green transition-all border border-terminal-green/40 px-4 py-2 rounded bg-terminal-green-muted"
+                className="mt-2 text-xs font-mono text-terminal-green border border-terminal-green/40 px-4 py-2 rounded bg-terminal-green-muted"
               >
                 {s.action.label}
               </button>
