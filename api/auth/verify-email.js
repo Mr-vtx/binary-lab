@@ -1,106 +1,30 @@
-import { parseCookies } from "../../lib/cookieParser.js";
 import crypto from "crypto";
 import { connectDB } from "../../lib/mongo.js";
-import { cors } from "../../lib/cors.js";
-import { signAccessToken } from "../../lib/jwt.js";
-import { setAuthCookies } from "../../lib/cookies.js";
-import {
-  generateToken,
-  hashToken,
-  getFingerprint,
-} from "../../lib/securefalc.js";
-import { sendVerificationEmail } from "../../lib/email.js";
 
 export default async function handler(req, res) {
-  if (cors(req, res)) return;
-  parseCookies(req);
+  const db = await connectDB();
+  const users = db.collection("users");
 
-  if (req.method === "POST") {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
+  const { token } = req.query;
 
-    try {
-      const db = await connectDB();
-      const user = await db.collection("users").findOne({
-        email: email.toLowerCase().trim(),
-      });
+  if (!token) return res.status(400).json({ error: "No token" });
 
-      if (!user)
-        return res.status(200).json({
-          message: "If that account exists, a verification email was sent.",
-        });
-      if (user.emailVerified)
-        return res.status(400).json({ error: "Email already verified." });
+  const hashed = crypto.createHash("sha256").update(token).digest("hex");
 
-      const token = crypto.randomBytes(32).toString("hex");
-      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const user = await users.findOne({
+    "emailVerification.token": hashed,
+    "emailVerification.expires": { $gt: new Date() },
+  });
 
-      await db.collection("users").updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            "emailVerification.token": token,
-            "emailVerification.expires": expires,
-          },
-        },
-      );
+  if (!user) return res.status(400).json({ error: "Invalid token" });
 
-      await sendVerificationEmail(user.email, user.username, token);
-      return res.status(200).json({ message: "Verification email sent." });
-    } catch (err) {
-      console.error("Send verification error:", err);
-      return res.status(500).json({ error: "Server error" });
-    }
-  }
+  await users.updateOne(
+    { _id: user._id },
+    {
+      $set: { emailVerified: true },
+      $unset: { emailVerification: "" },
+    },
+  );
 
-  if (req.method === "GET") {
-    const { token } = req.query;
-    if (!token) return res.status(400).json({ error: "Token required" });
-
-    try {
-      const db = await connectDB();
-      const user = await db.collection("users").findOne({
-        "emailVerification.token": token,
-        "emailVerification.expires": { $gt: new Date() },
-      });
-
-      if (!user)
-        return res
-          .status(400)
-          .json({ error: "Link is invalid or has expired." });
-      if (user.emailVerified)
-        return res
-          .status(200)
-          .json({ alreadyVerified: true, username: user.username });
-
-      await db.collection("users").updateOne(
-        { _id: user._id },
-        {
-          $set: { emailVerified: true, emailVerifiedAt: new Date() },
-          $unset: { emailVerification: "" },
-        },
-      );
-
-      const accessToken = signAccessToken({ userId: user._id.toString() });
-      const refreshToken = generateToken();
-      const csrfToken = generateToken();
-      const fingerprint = getFingerprint(req);
-
-      await db.collection("sessions").insertOne({
-        userId: user._id,
-        token: hashToken(refreshToken),
-        fingerprint,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 7 * 86400000),
-      });
-
-      setAuthCookies(res, accessToken, refreshToken, csrfToken);
-      return res.status(200).json({ verified: true, username: user.username });
-    } catch (err) {
-      console.error("Verify email error:", err);
-      return res.status(500).json({ error: "Server error" });
-    }
-  }
-
-  return res.status(405).json({ error: "Method not allowed" });
+  res.json({ success: true });
 }

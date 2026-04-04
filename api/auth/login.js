@@ -20,6 +20,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
   const { email, password } = req.body;
+
   if (!validateEmail(email) || !password) {
     return res.status(400).json({ error: "Invalid input" });
   }
@@ -33,13 +34,15 @@ export default async function handler(req, res) {
     5,
     60000,
   );
-  if (!allowed)
-    return res.status(429).json({ error: "Too many attempts. Wait a minute." });
+
+  if (!allowed) {
+    return res.status(429).json({ error: "Too many attempts" });
+  }
 
   const user = await db.collection("users").findOne({ email: cleanEmail });
 
   if (user?.lockUntil && user.lockUntil > Date.now()) {
-    return res.status(403).json({ error: "Account locked. Try again later." });
+    return res.status(403).json({ error: "Account locked" });
   }
 
   const hash = user ? user.passwordHash : FAKE_HASH;
@@ -49,6 +52,7 @@ export default async function handler(req, res) {
     if (user) {
       const attempts = (user.loginAttempts || 0) + 1;
       const lock = attempts >= 5 ? Date.now() + 15 * 60 * 1000 : null;
+
       await db
         .collection("users")
         .updateOne(
@@ -56,7 +60,14 @@ export default async function handler(req, res) {
           { $set: { loginAttempts: attempts, lockUntil: lock } },
         );
     }
+
     return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  if (!user.emailVerified) {
+    return res.status(403).json({
+      error: "Please verify your email first",
+    });
   }
 
   await db
@@ -82,5 +93,6 @@ export default async function handler(req, res) {
   setAuthCookies(res, accessToken, refreshToken, csrfToken);
 
   const { passwordHash, emailVerification, ...safeUser } = user;
+
   return res.status(200).json({ success: true, user: safeUser });
 }

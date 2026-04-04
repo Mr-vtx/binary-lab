@@ -1,4 +1,9 @@
-export function welcomeTemplate({ appName, username, appUrl }) {
+export function welcomeVerifyTemplate({
+  appName,
+  username,
+  verifyLink,
+  appUrl,
+}) {
   return `
 <!DOCTYPE html>
 <html>
@@ -22,37 +27,44 @@ export function welcomeTemplate({ appName, username, appUrl }) {
 
       <!-- Body -->
       <div style="padding:24px;">
-        <p style="color:#6b8a7a;font-size:12px;margin-bottom:16px;">
-          // system_boot.sh
-        </p>
 
         <p style="margin-bottom:12px;">
           Hey <strong>${username}</strong>,
         </p>
 
         <p style="color:#6b8a7a;line-height:1.6;">
-          Your account is ready. You're now part of <strong>${appName}</strong>.
-          Start learning, tracking progress, and unlocking levels as you go.
+          Welcome to <strong>${appName}</strong> 🚀  
+          You're almost ready to start your journey.
         </p>
 
-        <!-- Stage -->
-        <div style="margin:20px 0;padding:16px;background:#004d2a;border:1px solid #00ff8844;border-radius:6px;">
+        <!-- Verification Block -->
+        <div style="margin:20px 0;padding:16px;background:#001f14;border:1px solid #00ff8844;border-radius:6px;">
           <p style="margin:0;color:#00ff88;font-size:13px;">
-            ⚡ Stage 1 — Bit Rookie
+            ⚠️ Step Required: Verify Your Email
           </p>
           <p style="margin:6px 0 0;color:#6b8a7a;font-size:11px;">
-            Learn the basics of binary and build your foundation.
+            Confirm your email to unlock full access.
           </p>
         </div>
 
-        <!-- CTA -->
+        <!-- CTA Button -->
         <div style="text-align:center;margin-top:24px;">
-          <a href="${appUrl}"
+          <a href="${verifyLink}"
              style="display:inline-block;padding:12px 24px;
-             background:#004d2a;border:1px solid #00ff88;
-             color:#00ff88;text-decoration:none;font-size:13px;
-             letter-spacing:0.08em;">
-            → Start Practicing
+             background:#00ff88;border:1px solid #00ff88;
+             color:#000;text-decoration:none;font-size:13px;
+             letter-spacing:0.08em;font-weight:bold;">
+            ✓ Verify Email
+          </a>
+        </div>
+
+        <!-- Secondary CTA -->
+        <div style="text-align:center;margin-top:16px;">
+          <a href="${appUrl}"
+             style="display:inline-block;padding:10px 20px;
+             border:1px solid #00ff88;
+             color:#00ff88;text-decoration:none;font-size:12px;">
+            Start Practicing →
           </a>
         </div>
 

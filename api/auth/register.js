@@ -9,20 +9,16 @@ import {
   hashToken,
   getFingerprint,
 } from "../../lib/securefalc.js";
-import { sendWelcomeEmail, sendVerificationEmail } from "../../lib/email.js";
 import {
   validateEmail,
   validatePassword,
   validateUsername,
   normalizeEmail,
 } from "../../lib/validate.js";
+import { sendWelcomeAndVerificationEmail } from "../../lib/email.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -37,6 +33,7 @@ export default async function handler(req, res) {
   ) {
     return res.status(400).json({ error: "Invalid input" });
   }
+
   if (password !== confirmPassword) {
     return res.status(400).json({ error: "Passwords do not match" });
   }
@@ -44,64 +41,74 @@ export default async function handler(req, res) {
   try {
     const db = await connectDB();
     const users = db.collection("users");
+
     const normalizedEmail = normalizeEmail(email);
+    const cleanUsername = username.trim();
 
     const existing = await users.findOne({
-      $or: [{ email: normalizedEmail }, { username: username.trim() }],
+      $or: [{ email: normalizedEmail }, { username: cleanUsername }],
     });
+
     if (existing) {
-      const field = existing.email === normalizedEmail ? "Email" : "Username";
-      return res.status(409).json({ error: `${field} already taken` });
+      return res.status(409).json({ error: "User already exists" });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+
     const verifyToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(verifyToken)
+      .digest("hex");
+
     const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const user = {
+    const newUser = {
       email: normalizedEmail,
-      username: username.trim(),
+      username: cleanUsername,
       passwordHash,
       createdAt: new Date(),
       emailVerified: false,
-      emailVerification: { token: verifyToken, expires: verifyExpires },
+      emailVerification: {
+        token: hashedToken,
+        expires: verifyExpires,
+      },
       xp: 0,
       streak: { current: 0, best: 0, daily: 0, lastActiveDate: null },
       stats: { totalAnswered: 0, totalCorrect: 0, byCategory: {} },
       stageHistory: [],
     };
 
-    const result = await users.insertOne(user);
+    const result = await users.insertOne(newUser);
 
     const accessToken = signAccessToken({
       userId: result.insertedId.toString(),
     });
+
     const refreshToken = generateToken();
     const csrfToken = generateToken();
-    const fingerprint = getFingerprint(req);
 
     await db.collection("sessions").insertOne({
       userId: result.insertedId,
       token: hashToken(refreshToken),
-      fingerprint,
+      fingerprint: getFingerprint(req),
       createdAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 86400000),
     });
 
     setAuthCookies(res, accessToken, refreshToken, csrfToken);
 
- await Promise.allSettled([
-   sendWelcomeEmail(user.email, user.username),
-   sendVerificationEmail(user.email, user.username, verifyToken),
- ]);
-    const { passwordHash: _, emailVerification: __, ...safeUser } = user;
+    await sendWelcomeAndVerificationEmail(email, username, verifyToken);
+
+    const { passwordHash: _, emailVerification, ...safeUser } = newUser;
+
     return res.status(201).json({
       success: true,
       user: { ...safeUser, _id: result.insertedId },
       emailVerificationSent: true,
     });
   } catch (err) {
-    console.error("Register error:", err);
+    console.error(err);
     return res.status(500).json({ error: "Server error" });
   }
 }
