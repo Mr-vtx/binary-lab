@@ -1,21 +1,21 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { signAccessToken } from "../_lib/jwt.js";
-import { setAuthCookies } from "../_lib/cookies.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { signAccessToken } from "../../lib/jwt.js";
+import { setAuthCookies } from "../../lib/cookies.js";
 import {
   generateToken,
   hashToken,
   getFingerprint,
-} from "../_lib/securefalc.js";
-import { sendWelcomeEmail, sendVerificationEmail } from "../_lib/email.js";
+} from "../../lib/securefalc.js";
+import { sendWelcomeEmail, sendVerificationEmail } from "../../lib/email.js";
 import {
   validateEmail,
   validatePassword,
   validateUsername,
   normalizeEmail,
-} from "../_lib/validate.js";
+} from "../../lib/validate.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
