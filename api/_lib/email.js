@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
-import { ResetPasswordTemplate as resetTpl } from "../emails/templates/resetPassword.js";
-import { WelcomeTemplate as welcomeTpl } from "../emails/templates/welcomeEmail.js";
+import { resetPasswordTemplate as resetTpl } from "../emails/templates/resetPassword.js";
+import { welcomeTemplate as welcomeTpl } from "../emails/templates/welcomeEmail.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
