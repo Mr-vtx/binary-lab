@@ -1,6 +1,15 @@
 export function cors(req, res) {
-  const origin = process.env.CLIENT_URL || "http://localhost:3000";
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
 
+const origin = allowedOrigins.includes(req.headers.origin)
+  ? req.headers.origin
+  : allowedOrigins[0];
+
+res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
