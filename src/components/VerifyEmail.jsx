@@ -25,17 +25,12 @@ export default function VerifyEmailPage({ onSuccess }) {
 
           setTimeout(() => {
             onSuccess?.();
-            window.location.href = "/"; // 🔥 proper redirect
+            window.location.href = "/"; 
           }, 1500);
 
           return;
         }
 
-        // fallback
-        setStatus("error");
-      })
-      .catch((err) => {
-        // handle backend error properly
         const msg = err?.response?.data?.error;
 
         if (msg?.includes("expired") || msg?.includes("invalid")) {
