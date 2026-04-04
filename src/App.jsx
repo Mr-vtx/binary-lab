@@ -12,7 +12,7 @@ import ResetPasswordPage from "./components/ResetPassword";
 import VerifyEmailPage from "./components/VerifyEmail";
 import VerifyEmailBanner from "./components/VerifyEmailBanner";
 import LandingPage from "./components/LandingPage";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics";
 const TABS = [
   {
     id: "bits",
@@ -27,7 +27,7 @@ const TABS = [
     desc: "Binary / Text / Decimal / Hex conversions",
   },
   {
-    id: "ascii",
+    id: "ascii", 
     label: "ASCII Table",
     short: "03",
     desc: "Browse and inspect all printable ASCII chars",
@@ -257,8 +257,8 @@ function Shell() {
 export default function App() {
   return (
     <AuthProvider>
-      <Analytics />
       <Shell />
+      <Analytics />
     </AuthProvider>
   );
 }
