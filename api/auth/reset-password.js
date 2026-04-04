@@ -1,14 +1,14 @@
-import { parseCookies } from "../_lib/cookieParser.js";
+import { parseCookies } from "../../lib/cookieParser.js";
 import bcrypt from "bcryptjs";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { signAccessToken, signRefreshToken } from "../_lib/jwt.js";
-import { setAuthCookies } from "../_lib/cookies.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { signAccessToken, signRefreshToken } from "../../lib/jwt.js";
+import { setAuthCookies } from "../../lib/cookies.js";
 import {
   generateToken,
   hashToken,
   getFingerprint,
-} from "../_lib/securefalc.js";
+} from "../../lib/securefalc.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;

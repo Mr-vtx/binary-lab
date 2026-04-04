@@ -1,7 +1,7 @@
-import { parseCookies } from "../_lib/cookieParser.js";
-import { connectDB } from "../_lib/mongo.js";
-import { verifyAccessToken } from "../_lib/jwt.js";
-import { cors } from "../_lib/cors.js";
+import { parseCookies } from "../../lib/cookieParser.js";
+import { connectDB } from "../../lib/mongo.js";
+import { verifyAccessToken } from "../../lib/jwt.js";
+import { cors } from "../../lib/cors.js";
 import { ObjectId } from "mongodb";
 import {
   calcXP,
@@ -10,7 +10,7 @@ import {
   getNextStage,
   calcDailyStreakUpdate,
   getDailyKey,
-} from "../_lib/progression.js";
+} from "../../lib/progression.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;

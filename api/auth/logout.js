@@ -1,7 +1,7 @@
-import { parseCookies } from "../_lib/cookieParser.js";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { hashToken } from "../_lib/securefalc.js";
+import { parseCookies } from "../../lib/cookieParser.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { hashToken } from "../../lib/securefalc.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;

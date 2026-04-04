@@ -1,9 +1,9 @@
-import { parseCookies } from "../_lib/cookieParser.js";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { getStageForXP, getNextStage, STAGES } from "../_lib/progression.js";
+import { parseCookies } from "../../lib/cookieParser.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { getStageForXP, getNextStage, STAGES } from "../../lib/progression.js";
 import { ObjectId } from "mongodb";
-import { verifyAccessToken } from "../_lib/jwt.js";
+import { verifyAccessToken } from "../../lib/jwt.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;

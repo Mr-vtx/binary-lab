@@ -1,15 +1,15 @@
-import { parseCookies } from "../_lib/cookieParser.js";
+import { parseCookies } from "../../lib/cookieParser.js";
 import crypto from "crypto";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { signAccessToken } from "../_lib/jwt.js";
-import { setAuthCookies } from "../_lib/cookies.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { signAccessToken } from "../../lib/jwt.js";
+import { setAuthCookies } from "../../lib/cookies.js";
 import {
   generateToken,
   hashToken,
   getFingerprint,
-} from "../_lib/securefalc.js";
-import { sendVerificationEmail } from "../_lib/email.js";
+} from "../../lib/securefalc.js";
+import { sendVerificationEmail } from "../../lib/email.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
@@ -26,28 +26,24 @@ export default async function handler(req, res) {
       });
 
       if (!user)
-        return res
-          .status(200)
-          .json({
-            message: "If that account exists, a verification email was sent.",
-          });
+        return res.status(200).json({
+          message: "If that account exists, a verification email was sent.",
+        });
       if (user.emailVerified)
         return res.status(400).json({ error: "Email already verified." });
 
       const token = crypto.randomBytes(32).toString("hex");
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-      await db
-        .collection("users")
-        .updateOne(
-          { _id: user._id },
-          {
-            $set: {
-              "emailVerification.token": token,
-              "emailVerification.expires": expires,
-            },
+      await db.collection("users").updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            "emailVerification.token": token,
+            "emailVerification.expires": expires,
           },
-        );
+        },
+      );
 
       await sendVerificationEmail(user.email, user.username, token);
       return res.status(200).json({ message: "Verification email sent." });

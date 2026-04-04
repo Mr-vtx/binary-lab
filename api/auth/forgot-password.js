@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { sendPasswordResetEmail } from "../_lib/email.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { sendPasswordResetEmail } from "../../lib/email.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     const users = db.collection("users");
     const user = await users.findOne({ email: email.toLowerCase().trim() });
 
-    if (!user) return res.status(200).json(SUCCESS); 
+    if (!user) return res.status(200).json(SUCCESS);
 
     const token = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 60 * 60 * 1000);

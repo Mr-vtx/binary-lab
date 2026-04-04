@@ -1,13 +1,13 @@
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { parseCookies } from "../_lib/cookieParser.js";
-import { signAccessToken } from "../_lib/jwt.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { parseCookies } from "../../lib/cookieParser.js";
+import { signAccessToken } from "../../lib/jwt.js";
 import {
   hashToken,
   generateToken,
   getFingerprint,
-} from "../_lib/securefalc.js";
-import { setAuthCookies } from "../_lib/cookies.js";
+} from "../../lib/securefalc.js";
+import { setAuthCookies } from "../../lib/cookies.js";
 
 export default async function handler(req, res) {
   if (cors(req, res)) return;

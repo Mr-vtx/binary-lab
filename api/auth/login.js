@@ -1,16 +1,16 @@
-import { parseCookies } from "../_lib/cookieParser.js";
+import { parseCookies } from "../../lib/cookieParser.js";
 import bcrypt from "bcryptjs";
-import { connectDB } from "../_lib/mongo.js";
-import { cors } from "../_lib/cors.js";
-import { signAccessToken } from "../_lib/jwt.js";
-import { setAuthCookies } from "../_lib/cookies.js";
+import { connectDB } from "../../lib/mongo.js";
+import { cors } from "../../lib/cors.js";
+import { signAccessToken } from "../../lib/jwt.js";
+import { setAuthCookies } from "../../lib/cookies.js";
 import {
   generateToken,
   hashToken,
   getFingerprint,
-} from "../_lib/securefalc.js";
-import { checkRateLimit } from "../_lib/rateLimit.js";
-import { validateEmail, normalizeEmail } from "../_lib/validate.js";
+} from "../../lib/securefalc.js";
+import { checkRateLimit } from "../../lib/rateLimit.js";
+import { validateEmail, normalizeEmail } from "../../lib/validate.js";
 
 const FAKE_HASH =
   "$2b$12$tIBXZVkCy5cv//8AF024uOV8rv3abYXXqqIkQ9A4jlAMK/ecOTEzy";
