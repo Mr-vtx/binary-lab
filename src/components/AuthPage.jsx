@@ -118,8 +118,7 @@ export default function AuthPage({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
 
-  const { login, register } = useAuth();
-
+  const { login, register, user } = useAuth();
   const reset = (newMode) => {
     setMode(newMode);
     setErrors({});
@@ -150,9 +149,9 @@ export default function AuthPage({ onSuccess }) {
       if (mode === "login") {
         await login(email, password);
         track("login", { method: "email" });
-if (user) {
-  onSuccess?.();
-}       
+        if (user) {
+          onSuccess?.();
+        }
       } else if (mode === "register") {
         await register(email, username, password, confirmPassword);
         track("register", { method: "email" });
