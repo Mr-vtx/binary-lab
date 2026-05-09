@@ -1,7 +1,7 @@
 {
   "name": "binary-lab",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Terminal-style encoding toolkit — binary, ASCII, Morse & hex with XP progression and user accounts",
   "author": "Vans <chukwubuikem004@gmail.com> (https://github.com/mr-vtx)",

@@ -22,3 +22,8 @@ export function copyToClipboard(text) {
 
 export function toBin(n) { return n.toString(2).padStart(8, '0'); }
 export function toHex(n) { return '0x' + n.toString(16).toUpperCase().padStart(2,'0'); }
+export function toAsciiChar(n) { return (n >= 32 && n < 127) ? String.fromCharCode(n) : (n === 0 ? 'NUL' : n < 32 ? 'CTRL' : 'DEL'); }
+export function toOctal(n) { return '0' + n.toString(8); }
+
+// v1.2 — app version used in UI
+export const APP_VERSION = '1.2.0';

@@ -1,254 +1,299 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AuthProvider, useAuth } from "./AuthContext";
-import BitToggler from "./components/BitToggler";
-import Converter from "./components/Converter";
-import AsciiTable from "./components/AsciiTable";
-import MorseCode from "./components/MorseCode";
-import Quiz from "./components/Quiz";
-import AuthPage from "./components/AuthPage";
-import UserHUD from "./components/UserHUD";
-import ProfileModal from "./components/ProfileModal";
-import ResetPasswordPage from "./components/ResetPassword";
-import VerifyEmailPage from "./components/VerifyEmail";
-import VerifyEmailBanner from "./components/VerifyEmailBanner";
-import LandingPage from "./components/LandingPage";
-import { Analytics } from "@vercel/analytics/react";
 
-const TABS = [
+// Existing tools
+import BitToggler  from "./components/BitToggler";
+import Converter   from "./components/Converter";
+import AsciiTable  from "./components/AsciiTable";
+import MorseCode   from "./components/MorseCode";
+import Quiz        from "./components/Quiz";
+
+// v1.2 panels
+import Pipeline       from "./components/Pipeline";
+import Learn          from "./components/Learn";
+import DailyChallenge from "./components/DailyChallenge";
+import SubnetCalc     from "./components/SubnetCalc";
+import NumberCalc     from "./components/NumberCalc";
+import CheatSheet     from "./components/CheatSheet";
+import Glossary       from "./components/Glossary";
+
+// Auth / layout
+import AuthPage          from "./components/AuthPage";
+import UserHUD           from "./components/UserHUD";
+import ProfileModal      from "./components/ProfileModal";
+import ResetPasswordPage from "./components/ResetPassword";
+import VerifyEmailPage   from "./components/VerifyEmail";
+import VerifyEmailBanner from "./components/VerifyEmailBanner";
+import LandingPage       from "./components/LandingPage";
+import { Analytics }     from "@vercel/analytics/react";
+
+// ─── Navigation tree ──────────────────────────────────────────────────────────
+const NAV = [
   {
-    id: "bits",
-    label: "Bit Toggler",
-    short: "01",
-    desc: "Toggle individual bits and see live values",
+    section: "LEARN",
+    items: [
+      { id: "learn",    icon: "📚", label: "Lessons",        badge: "START",  badgeColor: "#004d2a", badgeText: "#00ff88" },
+      { id: "challenge",icon: "🎯", label: "Daily Challenge", badge: "DAILY",  badgeColor: "#1a1400", badgeText: "#ffb800" },
+      { id: "quiz",     icon: "📝", label: "Practice Quiz" },
+    ],
   },
   {
-    id: "conv",
-    label: "Converter",
-    short: "02",
-    desc: "Binary / Text / Decimal / Hex conversions",
+    section: "TOOLS",
+    items: [
+      { id: "pipeline",  icon: "⚡", label: "Live Pipeline",   badge: "NEW", badgeColor: "#004d2a", badgeText: "#00ff88" },
+      { id: "subnet",    icon: "🌐", label: "Subnet Calc",     badge: "NEW", badgeColor: "#001a1f", badgeText: "#00d4ff" },
+      { id: "numcalc",   icon: "🔢", label: "Number Bases" },
+      { id: "bits",      icon: "⬛", label: "Bit Toggler" },
+      { id: "conv",      icon: "↔️",  label: "Converter" },
+      { id: "ascii",     icon: "🔤", label: "ASCII Table" },
+      { id: "morse",     icon: "📡", label: "Morse Code" },
+    ],
   },
   {
-    id: "ascii", 
-    label: "ASCII Table",
-    short: "03",
-    desc: "Browse and inspect all printable ASCII chars",
-  },
-  {
-    id: "morse",
-    label: "Morse Code",
-    short: "04",
-    desc: "Encode and decode Morse code",
-  },
-  {
-    id: "quiz",
-    label: "Practice",
-    short: "05",
-    desc: "Test your knowledge · earn XP · unlock stages",
+    section: "REFERENCE",
+    items: [
+      { id: "cheatsheet", icon: "📋", label: "Cheat Sheet" },
+      { id: "glossary",   icon: "📖", label: "Glossary" },
+    ],
   },
 ];
 
-const PANELS = {
-  bits: BitToggler,
-  conv: Converter,
-  ascii: AsciiTable,
-  morse: MorseCode,
-  quiz: Quiz,
+const PAGE_META = {
+  learn:      { title: "Lessons",         desc: "Structured beginner guide — binary → encoding → networking" },
+  challenge:  { title: "Daily Challenge", desc: "Daily quiz + topic sprints · earn XP" },
+  quiz:       { title: "Practice Quiz",   desc: "Test your knowledge · unlock harder stages" },
+  pipeline:   { title: "Live Pipeline",   desc: "Type anything — see every encoding format instantly" },
+  subnet:     { title: "Subnet Calc",     desc: "IP addressing & subnetting calculator with binary breakdown" },
+  numcalc:    { title: "Number Bases",    desc: "Convert between base 2, 8, 10, 16 with step-by-step working" },
+  bits:       { title: "Bit Toggler",     desc: "Click bits and watch decimal / hex update live" },
+  conv:       { title: "Converter",       desc: "Binary / text / decimal / hex conversions" },
+  ascii:      { title: "ASCII Table",     desc: "All 128 ASCII characters with decimal, binary, and hex codes" },
+  morse:      { title: "Morse Code",      desc: "Encode and decode Morse code" },
+  cheatsheet: { title: "Cheat Sheet",     desc: "Printable quick reference — powers of 2, ASCII, hex, subnets" },
+  glossary:   { title: "Glossary",        desc: "Every term explained in plain English" },
 };
 
+const PANELS = {
+  learn:      Learn,
+  challenge:  DailyChallenge,
+  quiz:       Quiz,
+  pipeline:   Pipeline,
+  subnet:     SubnetCalc,
+  numcalc:    NumberCalc,
+  bits:       BitToggler,
+  conv:       Converter,
+  ascii:      AsciiTable,
+  morse:      MorseCode,
+  cheatsheet: CheatSheet,
+  glossary:   Glossary,
+};
+
+// ─── Sidebar ───────────────────────────────────────────────────────────────────
+function Sidebar({ active, onSelect, user, profile, onSignIn, open, onClose }) {
+  const totalXp = profile?.xp || 0;
+  const stage   = profile?.stage?.name || "Beginner";
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {open && (
+        <div className="sidebar-overlay md:hidden" onClick={onClose} />
+      )}
+
+      <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
+        {/* Logo */}
+        <div style={{ padding: "14px 12px 10px", borderBottom: "1px solid #1a2030" }}>
+          <div className="font-display glow-green" style={{ color: "#00ff88", fontSize: 16, letterSpacing: "0.12em" }}>
+            BINARY_LAB
+          </div>
+          <div style={{ color: "#3a5040", fontSize: 9, letterSpacing: "0.1em", marginTop: 2, fontFamily: "JetBrains Mono" }}>
+            v1.2 · LEARN · BUILD · MASTER
+          </div>
+        </div>
+
+        {/* User pill */}
+        <div style={{ padding: "10px 10px 0" }}>
+          {user ? (
+            <div style={{ background: "#0d1f14", border: "1px solid #00ff8820", borderRadius: 6, padding: "8px 10px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ color: "#00ff88", fontSize: 10, fontFamily: "JetBrains Mono" }}>
+                  ● {user.username || user.email?.split("@")[0]}
+                </span>
+                <span style={{ color: "#ffb800", fontSize: 10, fontFamily: "JetBrains Mono" }}>
+                  {totalXp} XP
+                </span>
+              </div>
+              <div style={{ color: "#3a5040", fontSize: 9, fontFamily: "JetBrains Mono", marginTop: 2 }}>
+                {stage}
+              </div>
+            </div>
+          ) : (
+            <button onClick={onSignIn} className="btn-primary" style={{ width: "100%", textAlign: "center", fontSize: 11 }}>
+              → Sign in / Register
+            </button>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "8px 8px 16px" }}>
+          {NAV.map(({ section, items }) => (
+            <div key={section}>
+              <div style={{ color: "#3a5040", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", padding: "14px 4px 5px", fontFamily: "JetBrains Mono" }}>
+                {section}
+              </div>
+              {items.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => { onSelect(item.id); onClose?.(); }}
+                  className={`nav-item ${active === item.id ? "active" : ""}`}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.badge && (
+                    <span style={{
+                      fontSize: 8, padding: "1px 5px", borderRadius: 3,
+                      background: item.badgeColor, color: item.badgeText,
+                      border: `1px solid ${item.badgeText}33`,
+                      letterSpacing: "0.08em", fontFamily: "JetBrains Mono",
+                    }}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div style={{ padding: "10px 12px", borderTop: "1px solid #1a2030" }}>
+          <div style={{ color: "#3a5040", fontSize: 9, fontFamily: "JetBrains Mono" }}>
+            made with 💚 by{" "}
+            <a href="https://github.com/mr-vtx" style={{ color: "#00ff8860" }}>mr-vtx</a>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+// ─── Shell ─────────────────────────────────────────────────────────────────────
 function Shell() {
-  const { user, loading, refreshProfile } = useAuth();
-  const [view, setView] = useState("landing");
-  const [authMode, setAuthMode] = useState("login");
-  const [active, setActive] = useState("bits");
+  const { user, profile, loading, logout, refreshProfile } = useAuth();
+  const [view, setView]               = useState("landing");
+  const [authMode, setAuthMode]       = useState("login");
+  const [active, setActive]           = useState("learn");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const Panel = PANELS[active];
 
-  const path = window.location.pathname;
+  const Panel   = PANELS[active];
+  const meta    = PAGE_META[active] || {};
+  const path    = window.location.pathname;
 
+  // Route handling
   if (path === "/reset-password") {
-    return (
-      <ResetPasswordPage
-        onSuccess={() => {
-          window.history.pushState({}, "", "/");
-          refreshProfile?.();
-          setView("app");
-        }}
-      />
-    );
+    return <ResetPasswordPage onSuccess={() => { window.history.pushState({}, "", "/"); refreshProfile?.(); setView("app"); }} />;
   }
-
   if (path === "/verify-email") {
-    return (
-      <VerifyEmailPage
-        onSuccess={() => {
-          window.history.pushState({}, "", "/");
-          refreshProfile?.();
-          setView(user ? "app" : "landing");
-        }}
-      />
-    );
+    return <VerifyEmailPage onSuccess={() => { window.history.pushState({}, "", "/"); refreshProfile?.(); setView(user ? "app" : "landing"); }} />;
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-terminal-bg flex items-center justify-center">
-        <div className="font-display text-terminal-green text-xl tracking-widest glow-green">
-          BINARY_LAB<span className="cursor-blink ml-1">▊</span>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0c0f" }}>
+        <div className="font-display glow-green" style={{ color: "#00ff88", fontSize: 20, letterSpacing: "0.14em" }}>
+          BINARY_LAB<span className="cursor-blink" style={{ marginLeft: 4 }}>▊</span>
         </div>
       </div>
     );
   }
 
   if (view === "landing" && !user) {
-    return (
-      <LandingPage
-        onEnter={() => setView("app")}
-        onAuth={(mode) => {
-          setAuthMode(mode);
-          setView("auth");
-        }}
-      />
-    );
+    return <LandingPage onEnter={() => setView("app")} onAuth={(m) => { setAuthMode(m); setView("auth"); }} />;
   }
-
   if (view === "auth" && !user) {
     return <AuthPage initialMode={authMode} onSuccess={() => setView("app")} />;
   }
 
   return (
-    <div className="min-h-screen bg-terminal-bg">
-      {user && user.emailVerified === false && (
-        <VerifyEmailBanner email={user.email} />
-      )}
+    <div className="app-shell">
+      {user && user.emailVerified === false && <VerifyEmailBanner email={user.email} />}
 
-      <header className="border-b border-terminal-border bg-terminal-panel/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="flex gap-1.5 mr-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-            </div>
-            <button
-              onClick={() => !user && setView("landing")}
-              className="text-left"
-            >
-              <div className="font-display text-terminal-green text-base tracking-widest glow-green">
-                BINARY_LAB
-              </div>
-              <div className="text-[10px] text-terminal-text-muted tracking-widest hidden sm:block">
-                v1.0.0 · encoding toolkit
-              </div>
-            </button>
-          </div>
+      {/* ── Top header ── */}
+      <header style={{ height: 50, flexShrink: 0, background: "#080b0e", borderBottom: "1px solid #1a2030", display: "flex", alignItems: "center", padding: "0 16px", gap: 12, zIndex: 20 }}>
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="md:hidden"
+          style={{ color: "#6b8a7a", background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 4, lineHeight: 1 }}
+        >
+          ☰
+        </button>
 
-          <div className="flex-1" />
-
-          {user ? (
-            <UserHUD onOpenProfile={() => setShowProfile(true)} />
-          ) : (
-            <button
-              onClick={() => {
-                setAuthMode("login");
-                setView("auth");
-              }}
-              className="text-xs font-mono px-3 py-1.5 rounded border border-terminal-green/40 text-terminal-green hover:shadow-glow-green transition-all"
-            >
-              → Login / Register
-            </button>
-          )}
+        {/* Breadcrumb */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          <span style={{ color: "#00ff8840", fontFamily: "JetBrains Mono", fontSize: 11 }}>~/lab/</span>
+          <span style={{ color: "#e8f5ef", fontFamily: "JetBrains Mono", fontSize: 11, fontWeight: 600 }}>{active}</span>
+          <span style={{ color: "#3a5040", fontSize: 11, margin: "0 2px" }}>—</span>
+          <span style={{ color: "#3a5040", fontFamily: "JetBrains Mono", fontSize: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {meta.desc}
+          </span>
         </div>
+
+        {/* Right: user HUD or sign in */}
+        {user ? (
+          <UserHUD onOpenProfile={() => setShowProfile(true)} />
+        ) : (
+          <button
+            onClick={() => { setAuthMode("login"); setView("auth"); }}
+            style={{ fontFamily: "JetBrains Mono", fontSize: 11, padding: "6px 12px", borderRadius: 5, border: "1px solid #00ff8840", color: "#00ff88", background: "transparent", cursor: "pointer" }}
+          >
+            → Sign In
+          </button>
+        )}
       </header>
 
-      {/* Nav */}
-      <nav className="border-b border-terminal-border bg-terminal-panel/40">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="flex gap-0 overflow-x-auto">
-            {TABS.map((tab) => {
-              const isActive = active === tab.id;
-              return (
+      {/* ── Body: sidebar + content ── */}
+      <div className="app-body">
+        <Sidebar
+          active={active}
+          onSelect={(id) => { setActive(id); setSidebarOpen(false); }}
+          user={user}
+          profile={profile}
+          onSignIn={() => { setAuthMode("login"); setView("auth"); }}
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <main className="content-area">
+          {/* Page header */}
+          <div style={{ padding: "20px 24px 0", borderBottom: "1px solid #1a203030", marginBottom: 0, paddingBottom: 16 }}>
+            <h1 style={{ fontFamily: "Share Tech Mono", fontSize: 18, color: "#e8f5ef", letterSpacing: "0.06em" }}>
+              {meta.title}
+            </h1>
+            {/* Guest nudge for gated pages */}
+            {!user && ["quiz", "learn", "challenge"].includes(active) && (
+              <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, background: "#0d1f14", border: "1px solid #00ff8820", borderRadius: 6, padding: "8px 12px" }}>
+                <span style={{ color: "#00ff88", fontSize: 12 }}>⚡</span>
+                <span style={{ color: "#6b8a7a", fontFamily: "JetBrains Mono", fontSize: 11, flex: 1 }}>
+                  Sign in to save progress, earn XP, and unlock all modules.
+                </span>
                 <button
-                  key={tab.id}
-                  onClick={() => setActive(tab.id)}
-                  className={`relative flex items-center gap-2 px-4 py-3 text-xs font-mono whitespace-nowrap transition-all duration-150 border-b-2
-                    ${
-                      isActive
-                        ? "border-terminal-green text-terminal-green bg-terminal-green-muted/30"
-                        : "border-transparent text-terminal-text-secondary hover:text-terminal-text-primary hover:bg-terminal-panel/60"
-                    }`}
+                  onClick={() => { setAuthMode("register"); setView("auth"); }}
+                  style={{ color: "#00ff88", fontFamily: "JetBrains Mono", fontSize: 11, background: "none", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
                 >
-                  <span
-                    className={`text-[10px] ${isActive ? "text-terminal-green/60" : "text-terminal-text-muted"}`}
-                  >
-                    {tab.short}
-                  </span>
-                  <span className="uppercase tracking-wider">{tab.label}</span>
+                  Free account →
                 </button>
-              );
-            })}
+              </div>
+            )}
           </div>
-        </div>
-      </nav>
 
-      {/* Breadcrumb */}
-      <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center gap-2">
-        <span className="text-terminal-green/40 text-xs font-mono">~/lab/</span>
-        <span className="text-terminal-text-muted text-xs font-mono">
-          {TABS.find((t) => t.id === active)?.id}
-        </span>
-        <span className="text-terminal-text-muted/40 text-xs mx-1">·</span>
-        <span className="text-terminal-text-muted text-xs font-mono">
-          {TABS.find((t) => t.id === active)?.desc}
-        </span>
+          {/* Panel content */}
+          <div style={{ padding: "20px 24px 48px", maxWidth: 900 }}>
+            <Panel key={active} />
+          </div>
+        </main>
       </div>
-
-      {/* Guest quiz nudge */}
-      {!user && active === "quiz" && (
-        <div className="max-w-5xl mx-auto px-4 mb-3">
-          <div className="flex items-center gap-3 bg-terminal-green-muted/30 border border-terminal-green/20 rounded px-4 py-2.5 text-xs font-mono">
-            <span className="text-terminal-green">⚡</span>
-            <span className="text-terminal-text-secondary flex-1">
-              Sign in to save your streak, earn XP, and unlock harder stages as
-              you improve.
-            </span>
-            <button
-              onClick={() => {
-                setAuthMode("register");
-                setView("auth");
-              }}
-              className="text-terminal-green hover:glow-green transition-all"
-            >
-              Create account →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Main */}
-      <main className="max-w-5xl mx-auto px-4 pb-12">
-        <Panel key={active} />
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-terminal-border mt-8 py-4">
-        <div className="max-w-5xl mx-auto px-4 flex items-center justify-between flex-wrap gap-2">
-          <span className="text-[11px] font-mono text-terminal-text-muted">
-            BINARY_LAB · by{" "}
-            <a
-              href="https://github.com/mr-vtx"
-              className="text-terminal-green/60 hover:text-terminal-green transition-colors"
-            >
-              mr-vtx
-            </a>
-          </span>
-          <button
-            onClick={() => !user && setView("landing")}
-            className="text-[11px] font-mono text-terminal-text-muted hover:text-terminal-text-secondary transition-colors"
-          >
-            ← back to landing
-          </button>
-        </div>
-      </footer>
 
       {showProfile && <ProfileModal onClose={() => setShowProfile(false)} />}
     </div>
