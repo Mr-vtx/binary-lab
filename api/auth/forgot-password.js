@@ -22,25 +22,30 @@ export default async function handler(req, res) {
 
     if (!user) return res.status(200).json(SUCCESS);
 
-    const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 60 * 60 * 1000);
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await users.updateOne(
       { _id: user._id },
       {
         $set: {
-          "passwordReset.token": token,
+          "passwordReset.token": hashedToken,
           "passwordReset.expires": expires,
           "passwordReset.usedAt": null,
         },
-      },
+      }
     );
 
-    await sendPasswordResetEmail(user.email, user.username, token);
+    await sendPasswordResetEmail(user.email, user.username, rawToken);
 
     return res.status(200).json(SUCCESS);
   } catch (err) {
     console.error("Forgot password error:", err);
-    return res.status(200).json(SUCCESS);
+    return res.status(200).json(SUCCESS); 
   }
 }

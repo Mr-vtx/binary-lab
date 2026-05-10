@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "../AuthContext";
 import { toBin, toHex, MORSE_MAP } from "../utils";
 
-// ─── Seeded RNG ───────────────────────────────────────────────────────────────
 function seededRand(seed) {
   let s = seed;
   return () => {
@@ -19,7 +18,6 @@ function shuffle(arr, rand) {
   return a;
 }
 
-// ─── Question generators ──────────────────────────────────────────────────────
 const MORSE_KEYS = Object.keys(MORSE_MAP).filter((k) => /^[A-Z0-9]$/.test(k));
 
 function makeQ(type, rand) {
@@ -69,7 +67,6 @@ function makeQ(type, rand) {
   }
 }
 
-// ─── Daily challenge helpers ──────────────────────────────────────────────────
 const ALL_CATS = ["BIN→DEC","DEC→BIN","ASCII","DEC→HEX","HEX→DEC","MORSE","SUBNET"];
 
 function getDailyKey() {
@@ -90,7 +87,6 @@ function buildDailyQs() {
   );
 }
 
-// ─── Topic challenges ─────────────────────────────────────────────────────────
 const TOPICS = [
   { id: "binary-sprint", label: "Binary Sprint",   emoji: "💻", desc: "10 binary ↔ decimal conversions", cats: ["BIN→DEC","DEC→BIN"], count: 10, xp: 15, color: "#00ff88" },
   { id: "ascii-master",  label: "ASCII Master",    emoji: "🔤", desc: "8 ASCII value challenges",          cats: ["ASCII"],            count: 8,  xp: 12, color: "#ffb800" },
@@ -100,14 +96,12 @@ const TOPICS = [
   { id: "mixed-pro",     label: "Mixed Pro",       emoji: "⚡", desc: "15 questions across ALL categories", cats: ALL_CATS,            count: 15, xp: 30, color: "#ff3355" },
 ];
 
-// ─── Category badge colors ────────────────────────────────────────────────────
 const CAT_COLOR = {
   "BIN→DEC": "#00ff88", "DEC→BIN": "#00ff88",
   "ASCII": "#ffb800", "DEC→HEX": "#ffb800", "HEX→DEC": "#ffb800",
   "MORSE": "#c084fc", "SUBNET": "#00d4ff",
 };
 
-// ─── Morse visual ─────────────────────────────────────────────────────────────
 function MorseVisual({ code }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
@@ -124,7 +118,6 @@ function MorseVisual({ code }) {
   );
 }
 
-// ─── Challenge runner ─────────────────────────────────────────────────────────
 function Runner({ questions, title, onFinish }) {
   const [qi, setQi]         = useState(0);
   const [chosen, setChosen] = useState(null);
@@ -158,7 +151,6 @@ function Runner({ questions, title, onFinish }) {
 
   return (
     <div className="panel-animate" style={{ maxWidth: 560 }}>
-      {/* Progress bar */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
           <span style={{ fontFamily: "JetBrains Mono", fontSize: 10, color: "#3a5040" }}>{title}</span>
@@ -169,9 +161,7 @@ function Runner({ questions, title, onFinish }) {
         </div>
       </div>
 
-      {/* Question card */}
       <div style={{ background: "#0e1117", border: "1px solid #1a2030", borderRadius: 8, padding: "20px" }}>
-        {/* Category badge */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <span style={{
             fontFamily: "JetBrains Mono", fontSize: 9, padding: "3px 9px", borderRadius: 3,
@@ -185,12 +175,10 @@ function Runner({ questions, title, onFinish }) {
           </span>
         </div>
 
-        {/* Question text */}
         <p style={{ fontFamily: "JetBrains Mono", fontSize: 13, color: "#a8c8b8", marginBottom: 14, lineHeight: 1.6 }}>
           {q.q}
         </p>
 
-        {/* Code display */}
         {q.code && (
           <div style={{
             background: "#080b0e", border: "1px solid #1a2030", borderRadius: 6,
@@ -211,7 +199,6 @@ function Runner({ questions, title, onFinish }) {
           </div>
         )}
 
-        {/* Options */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {q.opts.map((opt) => {
             let bg = "#080b0e", border = "#1a2030", color = "#6b8a7a";
@@ -239,7 +226,6 @@ function Runner({ questions, title, onFinish }) {
           })}
         </div>
 
-        {/* Feedback */}
         {chosen && (
           <div className="panel-animate" style={{ marginTop: 14 }}>
             <div style={{ fontFamily: "JetBrains Mono", fontSize: 12, color: chosen === q.a ? "#00ff88" : "#ff3355", marginBottom: 12 }}>
@@ -258,7 +244,6 @@ function Runner({ questions, title, onFinish }) {
   );
 }
 
-// ─── Results screen ───────────────────────────────────────────────────────────
 function Results({ results, elapsed, xp, title, onRetry, onBack }) {
   const score  = results.filter((r) => r.correct).length;
   const total  = results.length;
@@ -271,7 +256,6 @@ function Results({ results, elapsed, xp, title, onRetry, onBack }) {
 
   return (
     <div className="panel-animate" style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Score card */}
       <div style={{ background: "#0e1117", border: `1px solid ${gradeColor}30`, borderRadius: 8, padding: "28px", textAlign: "center" }}>
         <div style={{ fontSize: 36, marginBottom: 10 }}>{grade}</div>
         <div style={{ fontFamily: "Share Tech Mono", fontSize: 36, color: gradeColor, letterSpacing: "0.06em", marginBottom: 6 }}>
@@ -296,7 +280,6 @@ function Results({ results, elapsed, xp, title, onRetry, onBack }) {
         </div>
       </div>
 
-      {/* Breakdown */}
       <div style={{ background: "#0e1117", border: "1px solid #1a2030", borderRadius: 8, padding: "14px 16px" }}>
         <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>
           Breakdown
@@ -322,7 +305,6 @@ function Results({ results, elapsed, xp, title, onRetry, onBack }) {
         })}
       </div>
 
-      {/* Actions */}
       <div style={{ display: "flex", gap: 8 }}>
         <button className="btn-ghost" style={{ flex: 1 }} onClick={onRetry}>Try again</button>
         <button className="btn-primary" style={{ flex: 1 }} onClick={onBack}>← Challenges</button>
@@ -331,11 +313,10 @@ function Results({ results, elapsed, xp, title, onRetry, onBack }) {
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function DailyChallenge() {
   const { user } = useAuth();
-  const [mode, setMode]       = useState("menu");  // menu | daily | topic | results
-  const [active, setActive]   = useState(null);    // current challenge config
+  const [mode, setMode]       = useState("menu");  
+  const [active, setActive]   = useState(null);    
   const [questions, setQuestions] = useState([]);
   const [results, setResults] = useState(null);
   const [elapsed, setElapsed] = useState(0);
@@ -378,7 +359,6 @@ export default function DailyChallenge() {
     setResults(null);
   };
 
-  // ── Runner / Results views ──
   if (mode === "daily" || mode === "topic") {
     return <Runner questions={questions} title={active?.label} onFinish={handleFinish} />;
   }
@@ -393,11 +373,9 @@ export default function DailyChallenge() {
     );
   }
 
-  // ── Menu ──
   return (
     <div className="panel-animate" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-      {/* Daily challenge */}
       <div>
         <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>
           Today's Challenge · {dailyKey}
@@ -450,7 +428,6 @@ export default function DailyChallenge() {
         </button>
       </div>
 
-      {/* Topic challenges */}
       <div>
         <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>
           Topic Challenges
@@ -486,7 +463,6 @@ export default function DailyChallenge() {
         </div>
       </div>
 
-      {/* Tips */}
       <div style={{ background: "#080b0e", border: "1px solid #1a2030", borderRadius: 7, padding: "12px 16px" }}>
         <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>
           Tips

@@ -44,7 +44,6 @@ export default function ProfileModal({ onClose }) {
   const { stage, nextStage, stageProgress, xpToNext, accuracy, weakSpots, allStages } = profile;
   const colors = STAGE_COLORS[stage.color] || STAGE_COLORS.green;
 
-  // Week grid — last 7 days
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(Date.now() - (6 - i) * 86400000);
     const key = d.toISOString().slice(0, 10);
@@ -59,7 +58,6 @@ export default function ProfileModal({ onClose }) {
         className="w-full max-w-2xl bg-terminal-panel border border-terminal-border rounded-lg overflow-hidden max-h-[80vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-terminal-border bg-terminal-bg sticky top-0">
           <div className="flex items-center gap-3">
             <span className="font-display text-terminal-green text-sm tracking-widest glow-green">BINARY_LAB</span>
@@ -71,7 +69,6 @@ export default function ProfileModal({ onClose }) {
         </div>
 
         <div className="p-5 space-y-5">
-          {/* User + Stage */}
           <div className="flex items-start gap-4 flex-wrap">
             <div className={`px-4 py-3 rounded border ${colors.bg} ${colors.border} flex-1 min-w-48`}>
               <div className={`text-lg font-display tracking-widest ${colors.text}`}>{stage.name}</div>
@@ -90,7 +87,6 @@ export default function ProfileModal({ onClose }) {
               </div>
             </div>
 
-            {/* Quick stats */}
             <div className="grid grid-cols-3 gap-2 flex-1 min-w-48">
               {[
                 { label: 'Accuracy', val: `${accuracy}%`, color: accuracy >= 70 ? 'text-terminal-green' : 'text-terminal-amber' },
@@ -108,7 +104,6 @@ export default function ProfileModal({ onClose }) {
             </div>
           </div>
 
-          {/* Weekly activity */}
           <div>
             <div className="text-[10px] text-terminal-text-secondary uppercase tracking-widest mb-2">This week</div>
             <div className="flex gap-2">
@@ -121,7 +116,6 @@ export default function ProfileModal({ onClose }) {
             </div>
           </div>
 
-          {/* Category breakdown */}
           {Object.keys(user.stats?.byCategory || {}).length > 0 && (
             <div>
               <div className="text-[10px] text-terminal-text-secondary uppercase tracking-widest mb-2">Accuracy by category</div>
@@ -133,7 +127,6 @@ export default function ProfileModal({ onClose }) {
             </div>
           )}
 
-          {/* Weak spots */}
           {weakSpots?.length > 0 && (
             <div className="bg-red-900/10 border border-terminal-red/20 rounded p-3">
               <div className="text-[10px] text-terminal-red uppercase tracking-widest mb-2">⚠ Weak spots — needs practice</div>
@@ -147,7 +140,6 @@ export default function ProfileModal({ onClose }) {
             </div>
           )}
 
-          {/* Stage map */}
           <div>
             <div className="text-[10px] text-terminal-text-secondary uppercase tracking-widest mb-2">Stage roadmap</div>
             <div className="space-y-1.5">
@@ -173,7 +165,6 @@ export default function ProfileModal({ onClose }) {
             </div>
           </div>
 
-          {/* Recent sessions */}
           {!loadingHistory && history.length > 0 && (
             <div>
               <div className="text-[10px] text-terminal-text-secondary uppercase tracking-widest mb-2">Recent sessions</div>

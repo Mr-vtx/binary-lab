@@ -56,7 +56,6 @@ export default function Glossary() {
 
   return (
     <div className="panel-animate space-y-5">
-      {/* Header + search */}
       <div className="card">
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <span style={{ fontSize: 18 }}>📖</span>
@@ -92,13 +91,11 @@ export default function Glossary() {
         </div>
       </div>
 
-      {/* Results count */}
       <div style={{ fontFamily: "JetBrains Mono", fontSize: 10, color: "#3a5040" }}>
         {filtered.length} term{filtered.length !== 1 ? "s" : ""}
         {search && ` matching "${search}"`}
       </div>
 
-      {/* Terms list */}
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {filtered.map((item) => {
           const isOpen = expanded === item.term;

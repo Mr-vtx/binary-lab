@@ -21,7 +21,6 @@ export default function MorseCode() {
   const [textIn, setTextIn] = useState('');
   const [morseIn, setMorseIn] = useState('');
 
-  // Text → Morse
   const upper = textIn.toUpperCase();
   const encoded = Array.from(upper).map(ch => {
     if (ch === ' ') return '/';
@@ -29,7 +28,6 @@ export default function MorseCode() {
   }).join(' ');
   const charBreakdown = Array.from(upper).filter(c => c !== ' ');
 
-  // Morse → Text
   const morseWords = morseIn.trim().split(/\s+\/\s+|\s*\/\s*/);
   const decoded = morseWords.map(word =>
     word.split(/\s+/).map(sym => MORSE_REVERSE[sym] || (sym ? '?' : '')).join('')
@@ -38,7 +36,6 @@ export default function MorseCode() {
   return (
     <div className="space-y-4 panel-animate">
 
-      {/* Encoder */}
       <Card title="Text → Morse">
         <div className="space-y-3">
           <input
@@ -55,7 +52,6 @@ export default function MorseCode() {
                 <CopyButton text={encoded} />
               </div>
 
-              {/* Visual dots/dashes */}
               {textIn.trim() && (
                 <div className="flex flex-wrap gap-3">
                   {Array.from(upper).filter(c => c !== ' ' && MORSE_MAP[c]).map((ch, i) => (
@@ -73,7 +69,6 @@ export default function MorseCode() {
         </div>
       </Card>
 
-      {/* Decoder */}
       <Card title="Morse → Text" accent="amber">
         <div className="space-y-3">
           <div>
@@ -90,7 +85,6 @@ export default function MorseCode() {
         </div>
       </Card>
 
-      {/* Reference */}
       <Card title="Reference Chart" accent="cyan">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 max-h-64 overflow-y-auto pr-1">
           {Object.entries(MORSE_MAP).map(([ch, code]) => (

@@ -19,7 +19,6 @@ function parseInput(str, base) {
   return isNaN(n) ? null : n;
 }
 
-// Step-by-step: decimal → base
 function decToBaseSteps(dec, base) {
   if (dec === 0) return [{ quotient: 0, remainder: 0, digit: "0" }];
   const steps = [];
@@ -32,7 +31,6 @@ function decToBaseSteps(dec, base) {
   return steps.reverse();
 }
 
-// Step-by-step: base → decimal (positional)
 function baseToDec_steps(str, base) {
   const digits = str.toUpperCase().split("").reverse();
   return digits.map((d, i) => ({
@@ -78,7 +76,6 @@ export default function NumberCalc() {
 
   return (
     <div className="panel-animate space-y-5">
-      {/* Header */}
       <div className="card">
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <span style={{ fontSize: 18 }}>🔢</span>
@@ -90,7 +87,6 @@ export default function NumberCalc() {
           Convert between binary, octal, decimal, and hex — with full step-by-step working shown.
         </p>
 
-        {/* Base selector */}
         <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", alignSelf: "center" }}>INPUT IS:</span>
           {BASES.map((b) => (
@@ -109,7 +105,6 @@ export default function NumberCalc() {
           ))}
         </div>
 
-        {/* Input */}
         <div style={{ position: "relative" }}>
           <input
             className="terminal-input"
@@ -125,7 +120,6 @@ export default function NumberCalc() {
           )}
         </div>
 
-        {/* Quick examples */}
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", alignSelf: "center" }}>TRY:</span>
           {[
@@ -140,10 +134,8 @@ export default function NumberCalc() {
         </div>
       </div>
 
-      {/* Results */}
       {decValue !== null && (
         <>
-          {/* Decimal value */}
           {fromBase !== 10 && (
             <div className="card" style={{ border: "1px solid #00ff8820", background: "#0d1f14" }}>
               <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>
@@ -155,7 +147,6 @@ export default function NumberCalc() {
             </div>
           )}
 
-          {/* All bases */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
             {results.map(({ base, value, prefixed }) => (
               <div key={base.id} style={{ background: "#0e1117", border: `1px solid #1a2030`, borderRadius: 7, padding: "12px 14px" }}>
@@ -172,7 +163,6 @@ export default function NumberCalc() {
             ))}
           </div>
 
-          {/* Step by step */}
           <div className="card">
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showSteps ? 14 : 0 }}>
               <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.1em" }}>
@@ -186,7 +176,6 @@ export default function NumberCalc() {
 
             {showSteps && (
               <div className="panel-animate space-y-5">
-                {/* Base → decimal (positional notation) */}
                 {toDecSteps && (
                   <div>
                     <div style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "#e8f5ef", marginBottom: 10 }}>
@@ -221,7 +210,6 @@ export default function NumberCalc() {
                   </div>
                 )}
 
-                {/* Decimal → binary (repeated division) */}
                 {fromBase === 10 && (
                   <div>
                     <div style={{ fontFamily: "JetBrains Mono", fontSize: 11, color: "#e8f5ef", marginBottom: 10 }}>
@@ -259,7 +247,6 @@ export default function NumberCalc() {
             )}
           </div>
 
-          {/* Bit pattern for small values */}
           {decValue <= 255 && (
             <div className="card">
               <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>

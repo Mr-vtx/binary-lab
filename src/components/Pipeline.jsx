@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { toBin, toHex, MORSE_MAP, copyToClipboard } from "../utils";
 
-// ─── Conversion helpers ────────────────────────────────────────────────────────
 function textToBinary(text) {
   return Array.from(text).map((ch) => ch.charCodeAt(0).toString(2).padStart(8, "0")).join("  ");
 }
@@ -58,7 +57,6 @@ function toCanonical(input, type) {
   }
 }
 
-// ─── Copy button ───────────────────────────────────────────────────────────────
 function CopyBtn({ value }) {
   const [done, setDone] = useState(false);
   return (
@@ -77,7 +75,6 @@ function CopyBtn({ value }) {
   );
 }
 
-// ─── Output row ────────────────────────────────────────────────────────────────
 const ROW_THEMES = {
   green:  { bg: "#0d1f14", border: "#00ff8825", labelColor: "#00ff88" },
   amber:  { bg: "#1a140a", border: "#ffb80025", labelColor: "#ffb800" },
@@ -91,7 +88,6 @@ function OutputRow({ label, value, theme = "plain", tip, mono = true }) {
   const t = ROW_THEMES[theme] || ROW_THEMES.plain;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 0 }}>
-      {/* Connector */}
       <div style={{ width: 24, display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
         <div style={{ width: 1, height: 6, background: "#1a2030" }} />
         <div style={{ width: 6, height: 6, border: "1px solid #1a2030", borderRadius: 1, background: "#0a0c0f" }} />
@@ -118,7 +114,6 @@ function OutputRow({ label, value, theme = "plain", tip, mono = true }) {
   );
 }
 
-// ─── Bit breakdown grid ────────────────────────────────────────────────────────
 function BitGrid({ text }) {
   if (!text || text.length > 3) return null;
   const weights = [128, 64, 32, 16, 8, 4, 2, 1];
@@ -160,7 +155,6 @@ function BitGrid({ text }) {
   );
 }
 
-// ─── Type config ───────────────────────────────────────────────────────────────
 const TYPE_CFG = {
   text:    { label: "TEXT",    color: "#00ff88" },
   binary:  { label: "BINARY",  color: "#00d4ff" },
@@ -179,7 +173,6 @@ const EXAMPLES = [
   { label: "FF",       value: "FF",       base: "hex" },
 ];
 
-// ─── Main ──────────────────────────────────────────────────────────────────────
 export default function Pipeline() {
   const [input, setInput]     = useState("");
   const [showBits, setShowBits] = useState(false);
@@ -206,7 +199,6 @@ export default function Pipeline() {
   return (
     <div className="panel-animate" style={{ maxWidth: 720 }}>
 
-      {/* Input card */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 12 }}>
           <div>
@@ -234,7 +226,6 @@ export default function Pipeline() {
           )}
         </div>
 
-        {/* Input field */}
         <div style={{ position: "relative", marginBottom: 10 }}>
           <input
             className="terminal-input"
@@ -255,7 +246,6 @@ export default function Pipeline() {
           )}
         </div>
 
-        {/* Examples */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040" }}>TRY:</span>
           {EXAMPLES.map((ex) => (
@@ -274,10 +264,8 @@ export default function Pipeline() {
         </div>
       </div>
 
-      {/* Pipeline output */}
       {rows.length > 0 && (
         <div>
-          {/* Input display at top of pipeline */}
           <div style={{
             background: "#0d1f14", border: "1px solid #00ff8830",
             borderRadius: 6, padding: "10px 13px", marginBottom: 6,
@@ -292,7 +280,6 @@ export default function Pipeline() {
               {input}
             </div>
 
-            {/* Bit view toggle */}
             {canonical && canonical.length <= 3 && (
               <button
                 onClick={() => setShowBits((v) => !v)}
@@ -304,14 +291,12 @@ export default function Pipeline() {
             {showBits && canonical && <BitGrid text={canonical} />}
           </div>
 
-          {/* All output rows */}
           <div style={{ paddingLeft: 12 }}>
             {rows.map((row) => (
               <OutputRow key={row.label} {...row} />
             ))}
           </div>
 
-          {/* Legend */}
           <div style={{
             marginTop: 8, padding: "10px 13px", border: "1px solid #1a203060",
             borderRadius: 6, background: "#0a0c0f",
@@ -329,7 +314,6 @@ export default function Pipeline() {
         </div>
       )}
 
-      {/* Empty state */}
       {!input.trim() && (
         <div style={{ textAlign: "center", padding: "48px 0" }}>
           <div style={{ fontFamily: "JetBrains Mono", fontSize: 48, color: "#1a2030", marginBottom: 12 }}>01→FF</div>

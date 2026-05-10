@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
 function parseOctets(ip) {
   return ip.split(".").map(Number);
 }
@@ -44,7 +43,6 @@ function isPrivate(octets) {
   return "Public";
 }
 
-// ─── Binary row display ────────────────────────────────────────────────────────
 function BinRow({ label, octets, prefix, highlightHost = false, color = "#6b8a7a" }) {
   const allBits = octets.flatMap((o) => toBin8(o).split(""));
   return (
@@ -82,7 +80,6 @@ function BinRow({ label, octets, prefix, highlightHost = false, color = "#6b8a7a
   );
 }
 
-// ─── Result card ───────────────────────────────────────────────────────────────
 function ResultCard({ label, value, sub, color = "#6b8a7a", highlight }) {
   return (
     <div style={{
@@ -105,7 +102,6 @@ function ResultCard({ label, value, sub, color = "#6b8a7a", highlight }) {
   );
 }
 
-// ─── Common subnets reference ──────────────────────────────────────────────────
 const COMMON_CIDRS = [
   { cidr: "/8",  mask: "255.0.0.0",     hosts: "16,777,214", use: "Large ISP / enterprise" },
   { cidr: "/16", mask: "255.255.0.0",   hosts: "65,534",     use: "University / big office" },
@@ -124,11 +120,10 @@ const PRESETS = [
   { label: "Loopback",       ip: "127.0.0.1",      prefix: 8  },
 ];
 
-// ─── Main ──────────────────────────────────────────────────────────────────────
 export default function SubnetCalc() {
   const [ip, setIp]       = useState("192.168.1.100");
   const [prefix, setPrefix] = useState(24);
-  const [tab, setTab]     = useState("calc"); // calc | ref | learn
+  const [tab, setTab]     = useState("calc"); 
 
   const calc = useMemo(() => {
     if (!validIp(ip) || !validPrefix(prefix)) return null;
@@ -166,7 +161,6 @@ export default function SubnetCalc() {
 
   return (
     <div className="panel-animate space-y-5">
-      {/* Header */}
       <div className="card" style={{ paddingBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <span style={{ fontSize: 18 }}>🌐</span>
@@ -178,7 +172,6 @@ export default function SubnetCalc() {
           Enter an IP address and prefix length to calculate the full subnet — with binary breakdown showing how it all works.
         </p>
 
-        {/* Inputs */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <div style={{ flex: "3 1 180px" }}>
             <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", letterSpacing: "0.1em", marginBottom: 4 }}>IP ADDRESS</div>
@@ -208,7 +201,6 @@ export default function SubnetCalc() {
           </div>
         </div>
 
-        {/* Presets */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <span style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", alignSelf: "center" }}>PRESETS:</span>
           {PRESETS.map((p) => (
@@ -223,7 +215,6 @@ export default function SubnetCalc() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #1a2030" }}>
         {Tabs.map((t) => (
           <button
@@ -240,10 +231,8 @@ export default function SubnetCalc() {
         ))}
       </div>
 
-      {/* ── Calculator tab ── */}
       {tab === "calc" && calc && (
         <div className="panel-animate space-y-5">
-          {/* Binary breakdown */}
           <div className="card">
             <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
               Binary Breakdown
@@ -254,13 +243,11 @@ export default function SubnetCalc() {
             <BinRow label="AND result"   octets={calc.network}   color="#00ff88" />
             <BinRow label="Broadcast"    octets={calc.broadcast} color="#ffb800" />
 
-            {/* Legend */}
             <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
               <span style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#00d4ff" }}>■ Network bits</span>
               <span style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#ffb800" }}>■ Host bits</span>
             </div>
 
-            {/* Prefix bar */}
             <div style={{ marginTop: 14 }}>
               <div style={{ display: "flex", gap: 1, height: 8 }}>
                 {Array(32).fill(0).map((_, i) => (
@@ -277,7 +264,6 @@ export default function SubnetCalc() {
             </div>
           </div>
 
-          {/* Results grid */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 8 }}>
             <ResultCard label="Network Address"  value={toIpStr(calc.network)}   highlight color="#00ff88" sub="(first address — not usable)" />
             <ResultCard label="Broadcast Address" value={toIpStr(calc.broadcast)} color="#ffb800" sub="(last address — not usable)" />
@@ -299,7 +285,6 @@ export default function SubnetCalc() {
         </div>
       )}
 
-      {/* ── Reference tab ── */}
       {tab === "ref" && (
         <div className="panel-animate space-y-4">
           <div className="card">
@@ -327,7 +312,6 @@ export default function SubnetCalc() {
             </table>
           </div>
 
-          {/* Private ranges */}
           <div className="card">
             <div style={{ fontFamily: "JetBrains Mono", fontSize: 9, color: "#3a5040", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>
               Private IP Ranges (RFC 1918)
@@ -348,7 +332,6 @@ export default function SubnetCalc() {
         </div>
       )}
 
-      {/* ── Learn tab ── */}
       {tab === "learn" && (
         <div className="panel-animate space-y-4">
           {[
